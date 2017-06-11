@@ -2467,7 +2467,7 @@ void handle_i2cscanner() {
           reply += F("PCF8574<BR>MCP23017<BR>LCD<BR>PN532");
           break;
         case 0x29:
-          reply += F("TSL2561");
+          reply += F("TSL2561<BR>TCS34725");
           break;
         case 0x38:
         case 0x3A:
@@ -2517,7 +2517,7 @@ void handle_i2cscanner() {
           reply += F("Adafruit Motorshield v2<BR>SI1145");
           break;
         case 0x70:
-          reply += F("Adafruit Motorshield v2 (Catchall)");
+          reply += F("TCA9548A<BR>Adafruit Motorshield v2 (Catchall)");
           break;
         case 0x76:
           reply += F("BME280<BR>BMP280<BR>MS5607<BR>MS5611");

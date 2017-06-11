@@ -6,22 +6,41 @@
 // like this one: https://www.adafruit.com/products/1334
 // based on this library: https://github.com/adafruit/Adafruit_TCS34725
 // this code is based on 20170331 date version of the above library
-// this code is UNTESTED, because my TCS34725 sensor is still not shipped :(
 //
-#ifdef PLUGIN_BUILD_DEV
+// because of not changeable sensor address, i implemented support for the TCA9548A i2c multiplexer
+// thanks to adafruit for the great tutorial on in
+// https://learn.adafruit.com/adafruit-tca9548a-1-to-8-i2c-multiplexer-breakout/wiring-and-test
+//
+#ifdef PLUGIN_BUILD_TESTING
 
 #include "Adafruit_TCS34725.h"
 
 #define PLUGIN_050
 #define PLUGIN_ID_050        50
-#define PLUGIN_NAME_050       "Luminosity & Color - TCS34725  [DEVELOPMENT]"
+#define PLUGIN_NAME_050       "Luminosity & Color - TCS34725  [TEST]"
 #define PLUGIN_VALUENAME1_050 "Red"
 #define PLUGIN_VALUENAME2_050 "Green"
 #define PLUGIN_VALUENAME3_050 "Blue"
 #define PLUGIN_VALUENAME4_050 "Color Temperature"
 
+#define TCA9548A_ADDR 0x70
+
+volatile boolean interruptFired = false;
+unsigned long Plugin_050_pulseCounter = 0;
 
 
+/*********************************************************************/
+void Plugin_050_interrupt()
+/*********************************************************************/
+{
+	interruptFired = true;
+	Plugin_050_pulseCounter++;
+}
+
+
+boolean Plugin_050_init[TASKS_MAX];
+int waitTime;
+Adafruit_TCS34725 tcs;
 
 boolean Plugin_050(byte function, struct EventStruct *event, String& string)
 {
@@ -93,6 +112,20 @@ boolean Plugin_050(byte function, struct EventStruct *event, String& string)
         optionValuesMode2[3] = TCS34725_GAIN_60X;
         addFormSelector(string, F("Gain"), F("plugin_050_gain"), 4, optionsMode2, optionValuesMode2, choiceMode2);
 
+        string += F("<TR><TD>Enable LED:<TD>");
+        addCheckBox(string, F("plugin_050_led_on"), Settings.TaskDevicePluginConfig[event->TaskIndex][2]);
+
+        string += F("<TR><TD><hr><TD><hr>");
+
+        string += F("<TR><TD>Interrupt Pin:<TD>");
+        addPinSelect(false, string, "taskdevicepin3", Settings.TaskDevicePin3[event->TaskIndex]);
+        string += F("<TR><TD>Low Threshold:<TD>");
+        addNumericBox(string, F("plugin_050_intLowTreshold"), Settings.TaskDevicePluginConfig[event->TaskIndex][4]);
+        string += F("<TR><TD>High Threshold:<TD>");
+        addNumericBox(string, F("plugin_050_intHighTreshold"), Settings.TaskDevicePluginConfig[event->TaskIndex][5]);
+
+        string += F("<TR><TD><hr><TD><hr>");
+
         success = true;
         break;
       }
@@ -104,25 +137,66 @@ boolean Plugin_050(byte function, struct EventStruct *event, String& string)
         String plugin2 = WebServer.arg(F("plugin_050_gain"));
         Settings.TaskDevicePluginConfig[event->TaskIndex][1] = plugin2.toInt();
 
+        String plugin3 = WebServer.arg(F("plugin_050_led_on"));
+        Settings.TaskDevicePluginConfig[event->TaskIndex][2] = (plugin3 == F("on"));
+
+        String plugin5 = WebServer.arg(F("plugin_050_intLowTreshold"));
+        Settings.TaskDevicePluginConfig[event->TaskIndex][4] = plugin5.toInt();
+        String plugin6 = WebServer.arg(F("plugin_050_intHighTreshold"));
+        Settings.TaskDevicePluginConfig[event->TaskIndex][5] = plugin6.toInt();
+
         success = true;
         break;
       }
 
-    case PLUGIN_READ:
+    case PLUGIN_INIT:
       {
+        pinMode(Settings.TaskDevicePin3[event->TaskIndex], INPUT_PULLUP); //TCS interrupt output is Active-LOW and Open-Drain
+        attachInterrupt(Settings.TaskDevicePin3[event->TaskIndex], Plugin_050_interrupt, FALLING);
+
+        //set multiplexer to correct port if
+        if (Settings.i2c_multiplex_port[event->TaskIndex] != -1)
+        {
+        	addLog(LOG_LEVEL_DEBUG, String(F("Multiplexer Port: ")) + String(Settings.i2c_multiplex_port[event->TaskIndex]));
+        	i2cMultiplexerSelect(Settings.i2c_multiplex_port[event->TaskIndex]);
+        }
+        else
+        {
+        	addLog(LOG_LEVEL_DEBUG, F("Multiplexer Off"));
+        	i2cMultiplexerOff();
+        }
+
       	tcs34725IntegrationTime_t integrationTime;
         if (Settings.TaskDevicePluginConfig[event->TaskIndex][0]==TCS34725_INTEGRATIONTIME_2_4MS)
+        {
         	integrationTime = TCS34725_INTEGRATIONTIME_2_4MS;
+        	waitTime = 3;
+        }
         if (Settings.TaskDevicePluginConfig[event->TaskIndex][0]==TCS34725_INTEGRATIONTIME_24MS)
+        {
         	integrationTime = TCS34725_INTEGRATIONTIME_24MS;
+        	waitTime = 25;
+        }
         if (Settings.TaskDevicePluginConfig[event->TaskIndex][0]==TCS34725_INTEGRATIONTIME_50MS)
+        {
         	integrationTime = TCS34725_INTEGRATIONTIME_50MS;
+        	waitTime = 51;
+        }
         if (Settings.TaskDevicePluginConfig[event->TaskIndex][0]==TCS34725_INTEGRATIONTIME_101MS)
+        {
         	integrationTime = TCS34725_INTEGRATIONTIME_101MS;
+        	waitTime = 102;
+        }
         if (Settings.TaskDevicePluginConfig[event->TaskIndex][0]==TCS34725_INTEGRATIONTIME_154MS)
+        {
         	integrationTime = TCS34725_INTEGRATIONTIME_154MS;
+        	waitTime = 155;
+        }
         if (Settings.TaskDevicePluginConfig[event->TaskIndex][0]==TCS34725_INTEGRATIONTIME_700MS)
+        {
         	integrationTime = TCS34725_INTEGRATIONTIME_700MS;
+        	waitTime = 701;
+        }
 
         tcs34725Gain_t gain;
         if (Settings.TaskDevicePluginConfig[event->TaskIndex][1]==TCS34725_GAIN_1X)
@@ -135,38 +209,87 @@ boolean Plugin_050(byte function, struct EventStruct *event, String& string)
         	gain = TCS34725_GAIN_60X;
 
       	/* Initialise with specific int time and gain values */
-      	Adafruit_TCS34725 tcs = Adafruit_TCS34725(integrationTime, gain);
+      	tcs = Adafruit_TCS34725(integrationTime, gain);
         if (tcs.begin()) {
-
-        	addLog(LOG_LEVEL_DEBUG, F("Found TCS34725 sensor"));
-
-          uint16_t r, g, b, c, colorTemp, lux;
-
-          tcs.getRawData(&r, &g, &b, &c);
-          colorTemp = tcs.calculateColorTemperature(r, g, b);
-          lux = tcs.calculateLux(r, g, b);
-
-          UserVar[event->BaseVarIndex] = r;
-          UserVar[event->BaseVarIndex + 1] = g;
-          UserVar[event->BaseVarIndex + 2] = b;
-          UserVar[event->BaseVarIndex + 3] = tcs.calculateColorTemperature(r, g, b);
-
-          String log = F("TCS34725: Color Temp (K): ");
-          log += String(UserVar[event->BaseVarIndex + 3], DEC);
-          log += F(" R: ");
-          log += String(UserVar[event->BaseVarIndex], DEC);
-          log += F(" G: ");
-          log += String(UserVar[event->BaseVarIndex + 1], DEC);
-          log += F(" B: ");
-          log += String(UserVar[event->BaseVarIndex + 2], DEC);
-          addLog(LOG_LEVEL_INFO, log);
+          Plugin_050_init[event->TaskIndex] = true;
           success = true;
+        	addLog(LOG_LEVEL_DEBUG, String(F("TCS34725 init with Integr.Time: ")) + String(waitTime-1) +
+        			F(" and Gain: ") + String(gain) + F(" completed"));
 
-        } else {
-        	addLog(LOG_LEVEL_DEBUG, F("No TCS34725 found"));
-        	success = false;
+          tcs.write8(TCS34725_PERS, TCS34725_PERS_1_CYCLE);
+          tcs.setIntLimits(Settings.TaskDevicePluginConfig[event->TaskIndex][4],
+          		Settings.TaskDevicePluginConfig[event->TaskIndex][5]);
+        	addLog(LOG_LEVEL_DEBUG, "TCS34725 Interrupt Pin:" +
+        			String(Settings.TaskDevicePin3[event->TaskIndex]) +	" Tresholds LOW: " +
+        			String(Settings.TaskDevicePluginConfig[event->TaskIndex][4]) +
+        			F(" HIGH: ") + String(Settings.TaskDevicePluginConfig[event->TaskIndex][5]));
+
+          tcs.setInterrupt(true);  // turn on LED
+        }
+        else {
+					addLog(LOG_LEVEL_DEBUG, F("TCS34725 init failed, no sensor?"));
+					Plugin_050_init[event->TaskIndex] = false;
+	        success = false;
         }
 
+        break;
+      }
+
+    case PLUGIN_TEN_PER_SECOND:
+    {
+    	tcs.clearInterrupt();
+    	break;
+    }
+
+    case PLUGIN_READ:
+      {
+      	if (Plugin_050_init[event->TaskIndex])
+      	{
+      		//set multiplexer to correct port if
+          if (Settings.i2c_multiplex_port[event->TaskIndex] != -1)
+          {
+          	addLog(LOG_LEVEL_DEBUG, String(F("Multiplexer Port: ")) + String(Settings.i2c_multiplex_port[event->TaskIndex]));
+          	i2cMultiplexerSelect(Settings.i2c_multiplex_port[event->TaskIndex]);
+          }
+          else
+          {
+          	addLog(LOG_LEVEL_DEBUG, F("Multiplexer Off"));
+          	i2cMultiplexerOff();
+          }
+
+					uint16_t r, g, b, c, colorTemp, lux;
+
+//					if (Settings.TaskDevicePluginConfig[event->TaskIndex][2])
+//						tcs.setInterrupt(false);      // turn on LED
+//					else
+//						tcs.setInterrupt(true);  // turn off LED
+					delayBackground(waitTime);  // takes xx ms to read
+					tcs.getRawData(&r, &g, &b, &c);
+//					if (Settings.TaskDevicePluginConfig[event->TaskIndex][2])
+//						tcs.setInterrupt(true);  // turn off LED
+					colorTemp = tcs.calculateColorTemperature(r, g, b);
+					lux = tcs.calculateLux(r, g, b);
+
+					UserVar[event->BaseVarIndex] = r;
+					UserVar[event->BaseVarIndex + 1] = g;
+					UserVar[event->BaseVarIndex + 2] = b;
+					UserVar[event->BaseVarIndex + 3] = colorTemp;
+
+					String log = F("TCS34725: Color Temp (K): ");
+					log += String(UserVar[event->BaseVarIndex + 3], DEC);
+					log += F(" R: ");
+					log += String(UserVar[event->BaseVarIndex], DEC);
+					log += F(" G: ");
+					log += String(UserVar[event->BaseVarIndex + 1], DEC);
+					log += F(" B: ");
+					log += String(UserVar[event->BaseVarIndex + 2], DEC);
+					log += F(" C: ");
+					log += String(c, DEC);
+					addLog(LOG_LEVEL_INFO, log);
+					addLog(LOG_LEVEL_INFO, "pulseCounter: " + String(Plugin_050_pulseCounter,DEC));
+//					tcs.clearInterrupt();
+					success = true;
+      	}
         break;
       }
 

@@ -600,6 +600,7 @@ To create/register a plugin, you have to :
     #define USES_P080   // iButton Sensor  DS1990A
     #define USES_P081   // Cron
     #define USES_P082   // GPS
+    #define USES_P083   // MQ-5 gas sensor
 #endif
 
 
@@ -717,6 +718,11 @@ To create/register a plugin, you have to :
 
   #ifdef USE_SERVO
     #undef USE_SERVO
+  #endif
+
+  #ifdef USES_P083
+    // analogRead yields different values for ESP32
+    #undef USES_P083   // MQ-5 gas sensor
   #endif
 #endif
 

@@ -14,4 +14,16 @@ String Command_RTC_resetFlashWriteCounter(struct EventStruct *event, const char*
 	return return_command_success();
 }
 
+String Command_saveUserVarToRTC(struct EventStruct *event, const char* Line)
+{
+	saveUserVarToRTC();
+	return return_command_success();
+}
+
+String Command_readUserVarFromRTC(struct EventStruct *event, const char* Line)
+{
+	readUserVarFromRTC();
+	return return_command_success();
+}
+
 #endif // COMMAND_RTC_H

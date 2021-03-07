@@ -10,6 +10,7 @@
 #define PLUGIN_ID_013        13
 #define PLUGIN_NAME_013       "Position - HC-SR04, RCW-0001, etc."
 #define PLUGIN_VALUENAME1_013 "Distance"
+#define PLUGIN_VALUENAME2_013 "Switch"
 
 #include <Arduino.h>
 #include <map>
@@ -19,6 +20,7 @@
 // operatingMode
 #define OPMODE_VALUE        (0)
 #define OPMODE_STATE        (1)
+#define OPMODE_COMBINED     (2)
 
 // measuringUnit
 #define UNIT_CM             (0)
@@ -42,12 +44,12 @@ boolean Plugin_013(byte function, struct EventStruct *event, String& string)
       {
         Device[++deviceCount].Number = PLUGIN_ID_013;
         Device[deviceCount].Type = DEVICE_TYPE_DUAL;
-        Device[deviceCount].VType = Sensor_VType::SENSOR_TYPE_SINGLE;
+        Device[deviceCount].VType = Sensor_VType::SENSOR_TYPE_DUAL;
         Device[deviceCount].Ports = 0;
         Device[deviceCount].PullUpOption = false;
         Device[deviceCount].InverseLogicOption = false;
         Device[deviceCount].FormulaOption = true;
-        Device[deviceCount].ValueCount = 1;
+        Device[deviceCount].ValueCount = 2;
         Device[deviceCount].SendDataOption = true;
         Device[deviceCount].TimerOption = true;
         Device[deviceCount].GlobalSyncOption = true;
@@ -64,6 +66,7 @@ boolean Plugin_013(byte function, struct EventStruct *event, String& string)
     case PLUGIN_GET_DEVICEVALUENAMES:
       {
         strcpy_P(ExtraTaskSettings.TaskDeviceValueNames[0], PSTR(PLUGIN_VALUENAME1_013));
+        strcpy_P(ExtraTaskSettings.TaskDeviceValueNames[1], PSTR(PLUGIN_VALUENAME2_013));
         break;
       }
 
@@ -89,16 +92,16 @@ boolean Plugin_013(byte function, struct EventStruct *event, String& string)
           PCONFIG(5) = filterSize;
         }
 
-
         String strUnit = (measuringUnit == UNIT_CM) ? F("cm") : F("inch");
 
-        String optionsOpMode[2];
-        int optionValuesOpMode[2] = { 0, 1 };
+        String optionsOpMode[3];
+        int optionValuesOpMode[3] = { 0, 1, 2 };
         optionsOpMode[0] = F("Value");
         optionsOpMode[1] = F("State");
-        addFormSelector(F("Mode"), F("p013_mode"), 2, optionsOpMode, optionValuesOpMode, operatingMode);
+        optionsOpMode[2] = F("Combined");
+        addFormSelector(F("Mode"), F("p013_mode"), 3, optionsOpMode, optionValuesOpMode, operatingMode);
 
-        if (operatingMode == OPMODE_STATE)
+        if ((operatingMode == OPMODE_STATE) || (operatingMode == OPMODE_COMBINED))
         {
         	addFormNumericBox(F("Threshold"), F("p013_threshold"), threshold);
           addUnit(strUnit);
@@ -132,7 +135,7 @@ boolean Plugin_013(byte function, struct EventStruct *event, String& string)
         int16_t filterType = PCONFIG(4);
 
         PCONFIG(0) = getFormItemInt(F("p013_mode"));
-        if (operatingMode == OPMODE_STATE)
+        if ((operatingMode == OPMODE_STATE) || (operatingMode == OPMODE_COMBINED))
           PCONFIG(1) = getFormItemInt(F("p013_threshold"));
         PCONFIG(2) = getFormItemInt(F("p013_max_distance"));
 
@@ -213,8 +216,10 @@ boolean Plugin_013(byte function, struct EventStruct *event, String& string)
       {
         int16_t operatingMode = PCONFIG(0);
         int16_t measuringUnit = PCONFIG(3);
-
         if (operatingMode == OPMODE_VALUE)
+           event->sensorType = Sensor_VType::SENSOR_TYPE_SINGLE;
+           
+        if ((operatingMode == OPMODE_VALUE) || (operatingMode == OPMODE_COMBINED))
         {
           float value = Plugin_013_read(event->TaskIndex);
           String log = F("ULTRASONIC : TaskNr: ");
@@ -240,7 +245,7 @@ boolean Plugin_013(byte function, struct EventStruct *event, String& string)
         int16_t operatingMode = PCONFIG(0);
         int16_t threshold = PCONFIG(1);
 
-        if (operatingMode == OPMODE_STATE)
+        if ((operatingMode == OPMODE_STATE) || (operatingMode == OPMODE_COMBINED))
         {
           byte state = 0;
           float value = Plugin_013_read(event->TaskIndex);

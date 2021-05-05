@@ -21,7 +21,7 @@ struct RTCStruct
                 deepSleepState(0), bootFailedCount(0), flashDayCounter(0),
                 lastWiFiSettingsIndex(0),
                 flashCounter(0), bootCounter(0), lastMixedSchedulerId(0),
-                unused1(0), unused2(0),
+                repeatResetCount(0), repeatResetMarker(0),
                 lastSysTime(0) {}
 
   void init() {
@@ -36,8 +36,8 @@ struct RTCStruct
     flashCounter = 0;
     bootCounter = 0;
     lastMixedSchedulerId = 0;
-    unused1 = 0;
-    unused2 = 0;
+    repeatResetCount = 0;
+    repeatResetMarker = 0;
     lastSysTime = 0;
   }
 
@@ -66,8 +66,8 @@ struct RTCStruct
   unsigned long bootCounter;
   unsigned long lastMixedSchedulerId;
   uint8_t lastBSSID[6] = { 0 };
-  byte unused1;  // Force alignment to 4 bytes
-  byte unused2;
+  byte repeatResetCount;
+  byte repeatResetMarker;
   unsigned long lastSysTime;
 };
 

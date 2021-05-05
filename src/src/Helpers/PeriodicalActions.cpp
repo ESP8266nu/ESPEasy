@@ -35,6 +35,7 @@
 #include "../Helpers/StringGenerator_System.h"
 #include "../Helpers/StringGenerator_WiFi.h"
 #include "../Helpers/StringProvider.h"
+#include "../Helpers/RepeatResetDetect.h"
 
 
 #define PLUGIN_ID_MQTT_IMPORT         37
@@ -104,12 +105,22 @@ void runOncePerSecond()
 {
   START_TIMER;
   updateLogLevelCache();
-  dailyResetCounter++;
-  if (dailyResetCounter > 86400) // 1 day elapsed... //86400
+
+  static uint32_t oneSecLoopCounter = 0;
+  oneSecLoopCounter++;
+
+  if (oneSecLoopCounter == RepeatResetDetect::TIMEOUT)
+  {
+    addLog(LOG_LEVEL_INFO, F("SYS  : Disarm RepeatReset"));
+    RepeatResetDetect::disarm(RTC.repeatResetMarker); // disarm FactoryReset
+    saveToRTC();
+  }
+
+  if (oneSecLoopCounter >= 86400) // 1 day elapsed
   {
     RTC.flashDayCounter=0;
     saveToRTC();
-    dailyResetCounter=0;
+    oneSecLoopCounter=0;
     addLog(LOG_LEVEL_INFO, F("SYS  : Reset 24h counters"));
   }
 

@@ -31,7 +31,6 @@ extern unsigned long longestLoop;
 extern unsigned long loopCounter_full;
 extern float loop_usec_duration_total;
 
-extern unsigned long dailyResetCounter;
 extern volatile unsigned long sw_watchdog_callback_count;
 
 

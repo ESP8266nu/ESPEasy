@@ -1,11 +1,11 @@
-.. include:: ../Plugin/_plugin_substitutions_p06x.repl
+.. .. include:: ../Plugin/_plugin_substitutions_p06x.repl
 .. _P065_DFPlayer_Mini_page:
 
 DFPlayer Mini
 =============
 
-|P065_typename|
-|P065_status|
+.. .. |P065_typename|
+.. .. |P065_status|
 
 
 Introduction
@@ -22,37 +22,52 @@ Wiring
 
 .. code-block:: none
 
-  ESP               S8
-  GPIO (X)   <-->   TX
-  GPIO (X)   <-->   RX
+  ESP                   MP3-player
+  GPIO (X)       <-->   RX*
 
 
   Power
-  5.0V       <-->   VCC
-  GND        <-->   GND
+  5.0V or 3.3V   <-->   VCC
+  GND            <-->   GND
 
+  Speaker
+  Red            <-->   SPK_1
+  Black          <-->   SPK_2
 
-Setup
------
+  Other
+  IO_1           <-->   Button, short press: previous track, long press: decrease volume
+  IO_2           <-->   Button, short press: next track, long press: increase volume
 
+  LED
+  LED**          <-->   BUSY
 
+\*note that the TX on the mp3-module is not used!
 
-Rules examples
---------------
+\*\*optional, if you want a LED to indicate playback (low active).
 
-.. code-block:: none
+.. image:: P065_miniplayer_pin_map.png
 
-  //Code below...
-
-
-Indicators (recommended settings)
----------------------------------
-
-.. csv-table::
-  :header: "Indicator", "Value Name", "Interval", "Decimals", "Extra information"
-  :widths: 8, 5, 5, 5, 40
-
-  "XXXXXX", "N/A", "", "", ""
+.. Setup
+.. -----
+.. 
+.. 
+.. 
+.. Rules examples
+.. --------------
+.. 
+.. .. code-block:: none
+.. 
+..   //Code below...
+.. 
+.. 
+.. Indicators (recommended settings)
+.. ---------------------------------
+.. 
+.. .. csv-table::
+..   :header: "Indicator", "Value Name", "Interval", "Decimals", "Extra information"
+..   :widths: 8, 5, 5, 5, 40
+.. 
+..   "XXXXXX", "N/A", "", "", ""
 
 Where to buy
 ------------
@@ -66,5 +81,5 @@ Where to buy
 |affiliate|
 
 
-More pictures
--------------
+.. More pictures
+.. -------------

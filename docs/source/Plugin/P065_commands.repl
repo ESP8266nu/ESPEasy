@@ -1,0 +1,87 @@
+.. csv-table::
+        :header: "Command", "Extra information"
+        :widths: 20, 30
+
+        "
+        ``play,<number>``
+
+        Example:
+
+        ``play,12`` to play the 12th track available on the SD card.
+
+        ","
+        Starts playing the nth file on the SD-card. Acceptable numbers 0..2999.
+        "
+        "
+        ``stop``
+
+        ","
+        Stops playing the current file immediately.
+        "
+        "
+        ``vol,<volume>``
+
+        Example:
+
+        ``vol,15``
+
+        ","
+        Change the playback volume to the set level. Acceptable values 1..30. When 0 (or no argument) is provided, the max. volume will be set!
+
+        Volume is also stored in the settings, but not saved untile either a ``save`` command is used, or the settings of the device is saved from the web interface.
+        "
+        "
+        ``eq,<type>``
+
+        Example:
+
+        ``eq,4``
+
+        ","
+        Select the equalizer configuration. Acceptable values 0..5.
+
+        0 = Normal
+
+        1 = Pop
+
+        2 = Rock
+
+        3 = Classic
+
+        4 = Jazz
+
+        5 = Base
+        "
+        "
+        ``mode,<mode>``
+
+        Example:
+
+        ``mode,3``
+
+        ","
+        Select the playback mode. Acceptable values 0..3.
+
+        0 = Repeat
+
+        1 = Folder repeat
+
+        2 = Single repeat
+
+        3 = Random
+
+        NB: To have actual repeat playing a track, the ``repeat`` command should also be enabled.
+        "
+        "
+        ``repeat,<0|1>``
+
+        Example:
+
+        ``repeat,1``
+        ","
+        To set repeat mode. Default is off, acceptable values 0 or 1.
+
+        0 = Off
+
+        1 = On
+        "

@@ -253,7 +253,7 @@ boolean Plugin_008(byte function, struct EventStruct *event, String& string)
 }
 
 /*********************************************************************/
-void Plugin_008_interrupt1()
+void Plugin_008_interrupt2()
 /*********************************************************************/
 {
   // We've received a 1 bit. (bit 0 = high, bit 1 = low)
@@ -263,7 +263,7 @@ void Plugin_008_interrupt1()
 }
 
 /*********************************************************************/
-void Plugin_008_interrupt2()
+void Plugin_008_interrupt1()
 /*********************************************************************/
 {
   // We've received a 0 bit. (bit 0 = low, bit 1 = high)

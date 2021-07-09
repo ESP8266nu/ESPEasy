@@ -22,74 +22,53 @@
 #endif // ifdef ESP8266
 
 
-#define P002_OVERSAMPLING        PCONFIG(0)
+#define P002_IIR_FILTER_FRACTION PCONFIG(0)
 #define P002_CALIBRATION_ENABLED PCONFIG(3)
 #define P002_CALIBRATION_POINT1  PCONFIG_LONG(0)
 #define P002_CALIBRATION_POINT2  PCONFIG_LONG(1)
 #define P002_CALIBRATION_VALUE1  PCONFIG_FLOAT(0)
 #define P002_CALIBRATION_VALUE2  PCONFIG_FLOAT(1)
 
+#define P002_IIR_FILTER_FACTOR   32
+
 struct P002_data_struct : public PluginTaskData_base {
   P002_data_struct() {}
 
-  ~P002_data_struct() {
-    reset();
-  }
-
   void reset() {
-    OversamplingValue  = 0;
-    OversamplingCount  = 0;
-    OversamplingMinVal = P002_MAX_ADC_VALUE;
-    OversamplingMaxVal = -P002_MAX_ADC_VALUE;
+    valueRead = false;
   }
 
-  void addOversamplingValue(int currentValue) {
-    // Extra check to only add min or max readings once.
-    // They will be taken out of the averaging only one time.
-    if ((currentValue == 0) && (currentValue == OversamplingMinVal)) {
+  void addSample(int currentValue, int iir_factor) {
+    if (currentValue < 0) {
       return;
     }
+    int sample = currentValue;
+    sample *= 256; // pad for extra resolution.
 
-    if ((currentValue == P002_MAX_ADC_VALUE) && (currentValue == OversamplingMaxVal)) {
-      return;
-    }
-
-    OversamplingValue += currentValue;
-    ++OversamplingCount;
-
-    if (currentValue > OversamplingMaxVal) {
-      OversamplingMaxVal = currentValue;
-    }
-
-    if (currentValue < OversamplingMinVal) {
-      OversamplingMinVal = currentValue;
+    if (!valueRead || iir_factor < 2) {
+      iir_valA = sample;
+      iir_valB = sample;
+      valueRead = true;
+    } else {
+      // Use cascaded IIR filter.
+      iir_valA += (sample - iir_valA) / iir_factor;
+      iir_valB += (iir_valA - iir_valB) / iir_factor;
     }
   }
 
   bool getOversamplingValue(float& float_value, int& raw_value) {
-    if (OversamplingCount > 0) {
-      float sum   = static_cast<float>(OversamplingValue);
-      float count = static_cast<float>(OversamplingCount);
-
-      if (OversamplingCount >= 3) {
-        sum   -= OversamplingMaxVal;
-        sum   -= OversamplingMinVal;
-        count -= 2;
-      }
-      float_value = sum / count;
-      raw_value   = static_cast<int16_t>(float_value);
-      return true;
+    if (valueRead) {
+      float_value = static_cast<float>(iir_valB) / 256.0;
+      raw_value = iir_valB / 256;
     }
-    return false;
+    return valueRead;
   }
-
-  uint16_t OversamplingCount = 0;
 
 private:
 
-  int32_t OversamplingValue  = 0;
-  int16_t OversamplingMinVal = P002_MAX_ADC_VALUE;
-  int16_t OversamplingMaxVal = 0;
+  int32_t iir_valA = 0;
+  int32_t iir_valB = 0;
+  bool valueRead = false;
 };
 
 boolean Plugin_002(uint8_t function, struct EventStruct *event, String& string)
@@ -134,7 +113,7 @@ boolean Plugin_002(uint8_t function, struct EventStruct *event, String& string)
 
       #endif // if defined(ESP32)
 
-      addFormCheckBox(F("Oversampling"), F("p002_oversampling"), P002_OVERSAMPLING);
+      addFormNumericBox(F("IIR Filter Fraction"), F("p002_iir_ff"), P002_IIR_FILTER_FRACTION, 0, 256);
 
       addFormSubHeader(F("Two Point Calibration"));
 
@@ -172,7 +151,7 @@ boolean Plugin_002(uint8_t function, struct EventStruct *event, String& string)
 
     case PLUGIN_WEBFORM_SAVE:
     {
-      P002_OVERSAMPLING = isFormItemChecked(F("p002_oversampling"));
+      P002_IIR_FILTER_FRACTION = getFormItemInt(F("p002_iir_ff"));
 
       P002_CALIBRATION_ENABLED = isFormItemChecked(F("p002_cal"));
 
@@ -197,7 +176,7 @@ boolean Plugin_002(uint8_t function, struct EventStruct *event, String& string)
     }
     case PLUGIN_TEN_PER_SECOND:
     {
-      if (P002_OVERSAMPLING) // Oversampling
+      if (P002_IIR_FILTER_FRACTION > 0) // Oversampling
       {
         P002_data_struct *P002_data =
           static_cast<P002_data_struct *>(getPluginTaskData(event->TaskIndex));
@@ -206,7 +185,10 @@ boolean Plugin_002(uint8_t function, struct EventStruct *event, String& string)
           int currentValue;
 
           P002_performRead(event, currentValue);
-          P002_data->addOversamplingValue(currentValue);
+          // TODO TD-er: Must make clipping detection optional.
+          if (currentValue >0 && currentValue < P002_MAX_ADC_VALUE) {
+            P002_data->addSample(currentValue, P002_IIR_FILTER_FRACTION);
+          }
         }
       }
       success = true;
@@ -231,14 +213,13 @@ boolean Plugin_002(uint8_t function, struct EventStruct *event, String& string)
             log += F(" = ");
             log += formatUserVarNoCheck(event->TaskIndex, 0);
 
-            if (P002_OVERSAMPLING) {
-              log += F(" (");
-              log += P002_data->OversamplingCount;
-              log += F(" samples)");
+            if (P002_IIR_FILTER_FRACTION) {
+              log += F(" (filtered)");
             }
             addLog(LOG_LEVEL_INFO, log);
           }
-          P002_data->reset();
+          // TODO TD-er: Must perform reset?
+          //P002_data->reset();
           success = true;
         } else {
           addLog(LOG_LEVEL_ERROR, F("ADC  : No value received "));
@@ -261,7 +242,7 @@ bool P002_getOutputValue(struct EventStruct *event, int& raw_value, float& res_v
   }
   float float_value = 0.0f;
 
-  bool valueRead = P002_OVERSAMPLING && P002_data->getOversamplingValue(float_value, raw_value);
+  bool valueRead = P002_IIR_FILTER_FRACTION && P002_data->getOversamplingValue(float_value, raw_value);
 
   if (!valueRead) {
     P002_performRead(event, raw_value);

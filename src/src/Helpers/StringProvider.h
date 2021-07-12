@@ -104,6 +104,7 @@ struct LabelType {
     BUILD_TIME,
     BINARY_FILENAME,
     BUILD_PLATFORM,
+    BUILD_DESCRIPTION,
     GIT_HEAD,
 
 

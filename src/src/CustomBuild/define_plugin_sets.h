@@ -1080,6 +1080,7 @@ To create/register a plugin, you have to :
     //#define USES_P096  // eInk   (Needs lib_deps = Adafruit GFX Library, LOLIN_EPD )
     #define USES_P097   // Touch (ESP32)
     //#define USES_P099   // XPT2046 Touchscreen
+    #define USES_P098   // PWM motor  (relies on iRAM, cannot be combined with all other plugins)
 #endif
 
 #ifdef PLUGIN_SET_TESTING_B
@@ -1333,7 +1334,7 @@ To create/register a plugin, you have to :
     #define USES_P096  // eInk   (Needs lib_deps = Adafruit GFX Library, LOLIN_EPD )
   #endif
   #ifndef USES_P098
-    #define USES_P098   // ESPEasy-NOW Receiver
+    #define USES_P098   // PWM motor
   #endif
   #ifndef USES_P099
     #define USES_P099   // XPT2046 Touchscreen
@@ -1652,6 +1653,13 @@ To create/register a plugin, you have to :
   #endif
 #endif
 
+
+// P098 PWM motor needs P003 pulse
+#if defined(USES_P098)
+  #ifndef USES_P003
+    #define USES_P003
+  #endif
+#endif
 
 #ifdef USES_MQTT
 // MQTT_MAX_PACKET_SIZE : Maximum packet size

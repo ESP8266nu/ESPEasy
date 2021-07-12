@@ -23,7 +23,7 @@ else:
   custom_defines=[
     "-DCONTROLLER_SET_ALL",
     "-DNOTIFIER_SET_NONE",
-#    "-DPLUGIN_BUILD_NORMAL",
+    "-DPLUGIN_BUILD_NONE",
     "-DUSES_P001",  # Switch
     "-DUSES_P002",  # ADC
     "-DUSES_P003",  # Generic pulse counter
@@ -41,6 +41,8 @@ else:
     "-DUSES_P081",  # Cron
     "-DUSES_P082",  # GPS
     "-DUSES_P085",  # AcuDC24x
+    "-DUSES_P098",  # PWM motor
+
     "-DUSES_P100",  # Pulse Counter - DS2423
 #   "-DUSES_P087",  # Serial Proxy
 #   "-DUSES_P094",  # CUL Reader

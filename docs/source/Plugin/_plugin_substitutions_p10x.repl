@@ -119,3 +119,16 @@
 .. |P108_maintainer| replace:: TD-er
 .. |P108_compileinfo| replace:: `.`
 .. |P108_usedlibraries| replace::  `.`
+
+.. |P109_name| replace:: :cyan:`ThermoOLED`
+.. |P109_type| replace:: :cyan:`UV`
+.. |P109_typename| replace:: :cyan:`Display - ThermoOLED`
+.. |P109_porttype| replace:: `.`
+.. |P109_status| replace:: :yellow:`TESTING`
+.. |P109_github| replace:: P109_ThermoOLED.ino
+.. _P109_github: https://github.com/letscontrolit/ESPEasy/blob/mega/src/_P109_ThermoOLED.ino
+.. |P109_usedby| replace:: `.`
+.. |P109_shortinfo| replace:: `.`
+.. |P109_maintainer| replace:: TD-er
+.. |P109_compileinfo| replace:: `.`
+.. |P109_usedlibraries| replace::  `.`

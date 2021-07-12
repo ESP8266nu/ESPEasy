@@ -1,0 +1,42 @@
+.. include:: ../Plugin/_plugin_substitutions_p10x.repl
+.. _P109_page:
+
+|P109_typename|
+==================================================
+
+|P109_shortinfo|
+
+Plugin details
+--------------
+
+Type: |P109_type|
+
+Name: |P109_name|
+
+Status: |P109_status|
+
+GitHub: |P109_github|_
+
+Maintainer: |P109_maintainer|
+
+Used libraries: |P109_usedlibraries|
+
+Description
+-----------
+
+
+
+.. Events
+.. ~~~~~~
+
+.. .. include:: P109_events.repl
+
+
+
+Change log
+----------
+
+.. versionchanged:: 2.0
+  ...
+
+  |added| 2020-04-25

@@ -24,7 +24,7 @@ void handle_download()
   //  sendHeadandTail_stdtemplate();
 
 
-  fs::File dataFile = tryOpenFile(F(FILE_CONFIG), "r");
+  fs::File dataFile = tryOpenFile(getFileName(FileType::CONFIG_DAT), "r");
 
   if (!dataFile) {
     return;

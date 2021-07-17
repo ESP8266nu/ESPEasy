@@ -291,6 +291,36 @@
 
     ``Password,<new password>``"
     "
+    ProvisionConfig","
+    :red:`Internal`","
+    Fetch ``config.dat`` as configured in the Provisioning configuration (see Settings Archive)
+
+    ``ProvisionConfig``"
+    "
+    ProvisionSecurity","
+    :red:`Internal`","
+    Fetch ``security.dat`` as configured in the Provisioning configuration (see Settings Archive)
+
+    ``ProvisionSecurity``"
+    "
+    ProvisionNotification","
+    :red:`Internal`","
+    Fetch ``notification.dat`` as configured in the Provisioning configuration (see Settings Archive)
+
+    ``ProvisionNotification``"
+    "
+    ProvisionProvision","
+    :red:`Internal`","
+    Fetch ``provisioning.dat`` as configured in the Provisioning configuration (see Settings Archive)
+
+    ``ProvisionProvision``"
+    "
+    ProvisionRules","
+    :red:`Internal`","
+    Fetch ``rulesN.txt`` as configured in the Provisioning configuration (see Settings Archive)
+
+    ``ProvisionRules,1`` to fetch ``rules1.txt`` "
+    "
     Publish","
     :green:`Rules`","
     Send command using MQTT broker service

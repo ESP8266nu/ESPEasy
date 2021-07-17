@@ -27,6 +27,25 @@
  \*********************************************************************************************/
 void ResetFactory()
 {
+  #ifdef USE_CUSTOM_PROVISIONING
+  if (ResetFactoryDefaultPreference.getPreference() == 0)
+  {
+    ResetFactoryDefaultPreference.setDeviceModel(static_cast<DeviceModel>(DEFAULT_FACTORY_DEFAULT_DEVICE_MODEL));
+    ResetFactoryDefaultPreference.fetchRulesTXT(0, DEFAULT_PROVISIONING_FETCH_RULES1);
+    ResetFactoryDefaultPreference.fetchRulesTXT(1, DEFAULT_PROVISIONING_FETCH_RULES2);
+    ResetFactoryDefaultPreference.fetchRulesTXT(2, DEFAULT_PROVISIONING_FETCH_RULES3);
+    ResetFactoryDefaultPreference.fetchRulesTXT(3, DEFAULT_PROVISIONING_FETCH_RULES4);
+    ResetFactoryDefaultPreference.fetchNotificationDat(DEFAULT_PROVISIONING_FETCH_NOTIFICATIONS);
+    ResetFactoryDefaultPreference.fetchSecurityDat(DEFAULT_PROVISIONING_FETCH_SECURITY);
+    ResetFactoryDefaultPreference.fetchConfigDat(DEFAULT_PROVISIONING_FETCH_CONFIG);
+    ResetFactoryDefaultPreference.fetchProvisioningDat(DEFAULT_PROVISIONING_FETCH_PROVISIONING);
+    ResetFactoryDefaultPreference.saveURL(DEFAULT_PROVISIONING_SAVE_URL);
+    ResetFactoryDefaultPreference.storeCredentials(DEFAULT_PROVISIONING_SAVE_CREDENTIALS);
+    ResetFactoryDefaultPreference.allowFetchByCommand(DEFAULT_PROVISIONING_ALLOW_FETCH_COMMAND);
+  }
+  #endif
+
+
   const GpioFactorySettingsStruct gpio_settings(ResetFactoryDefaultPreference.getDeviceModel());
   #ifndef BUILD_NO_RAM_TRACKER
   checkRAM(F("ResetFactory"));
@@ -74,6 +93,18 @@ void ResetFactory()
     return;
   }
 
+#ifdef USE_CUSTOM_PROVISIONING
+  {
+    MakeProvisioningSettings(ProvisioningSettings);
+    if (AllocatedProvisioningSettings()) {
+      ProvisioningSettings.setUser(F(DEFAULT_PROVISIONING_USER));
+      ProvisioningSettings.setPass(F(DEFAULT_PROVISIONING_PASS));
+      ProvisioningSettings.setUrl(F(DEFAULT_PROVISIONING_URL));
+      ProvisioningSettings.ResetFactoryDefaultPreference = ResetFactoryDefaultPreference.getPreference();
+      saveProvisioningSettings(ProvisioningSettings);
+    }
+  }
+#endif
 
   // pad files with extra zeros for future extensions
   InitFile(SettingsType::SettingsFileEnum::FILE_CONFIG_type);
@@ -82,7 +113,7 @@ void ResetFactory()
   InitFile(SettingsType::SettingsFileEnum::FILE_NOTIFICATION_type);
   #endif
 
-  String fname = F(FILE_RULES);
+  String fname = getRulesFileName(0);
   InitFile(fname.c_str(), 0);
 
   Settings.clearMisc();

@@ -55,14 +55,14 @@ void etharp_gratuitous_r(struct netif *netif) {
 
 #endif  // ifdef SUPPORT_ARP
 
-#ifdef USE_SETTINGS_ARCHIVE
+#ifdef USE_DOWNLOAD
 # ifdef ESP8266
 #  include <ESP8266HTTPClient.h>
 # endif // ifdef ESP8266
 # ifdef ESP32
 #  include "HTTPClient.h"
 # endif // ifdef ESP32
-#endif  // USE_SETTINGS_ARCHIVE
+#endif
 
 
 /*********************************************************************************************\
@@ -1161,7 +1161,7 @@ String splitURL(const String& fullURL, String& host, uint16_t& port, String& fil
   return fullURL.substring(endhost);
 }
 
-#ifdef USE_SETTINGS_ARCHIVE
+#ifdef USE_DOWNLOAD
 
 // Download a file from a given URL and save to a local file named "file_save"
 // If the URL ends with a /, the file part will be assumed the same as file_save.
@@ -1203,7 +1203,8 @@ bool downloadFile(const String& url, String file_save, const String& user, const
   }
 
   if (fileExists(file_save)) {
-    error = F("File exists");
+    error = F("File exists: ");
+    error += file_save;
     addLog(LOG_LEVEL_ERROR, error);
     return false;
   }
@@ -1230,7 +1231,11 @@ bool downloadFile(const String& url, String file_save, const String& user, const
   if (httpCode != HTTP_CODE_OK) {
     error  = F("HTTP code: ");
     error += httpCode;
+    error += ' ';
+    error += url;
+
     addLog(LOG_LEVEL_ERROR, error);
+    http.end();
     return false;
   }
 
@@ -1238,7 +1243,8 @@ bool downloadFile(const String& url, String file_save, const String& user, const
   File f   = tryOpenFile(file_save, "w");
 
   if (f) {
-    uint8_t buff[128];
+    const size_t downloadBuffSize = 256;
+    uint8_t buff[downloadBuffSize];
     size_t  bytesWritten = 0;
 
     // get tcp stream
@@ -1246,14 +1252,16 @@ bool downloadFile(const String& url, String file_save, const String& user, const
 
     // read all data from server
     while (http.connected() && (len > 0 || len == -1)) {
-      // read up to 128 uint8_t
-      size_t c = stream->readBytes(buff, std::min((size_t)len, sizeof(buff)));
+      // read up to downloadBuffSize at a time.
+      const size_t c = stream->readBytes(buff, std::min((size_t)len, downloadBuffSize));
 
       if (c > 0) {
         timeout = millis() + 2000;
 
         if (f.write(buff, c) != c) {
-          error  = F("Error saving file, ");
+          error  = F("Error saving file: ");
+          error += file_save;
+          error += ' ';
           error += bytesWritten;
           error += F(" Bytes written");
           addLog(LOG_LEVEL_ERROR, error);
@@ -1266,7 +1274,8 @@ bool downloadFile(const String& url, String file_save, const String& user, const
       }
 
       if (timeOutReached(timeout)) {
-        error = F("Timeout");
+        error = F("Timeout: ");
+        error += file_save;
         addLog(LOG_LEVEL_ERROR, error);
         delay(0);
         http.end();
@@ -1276,12 +1285,18 @@ bool downloadFile(const String& url, String file_save, const String& user, const
     }
     f.close();
     http.end();
-    addLog(LOG_LEVEL_INFO, F("downloadFile: Success"));
+    if (loglevelActiveFor(LOG_LEVEL_INFO)) {
+      String log = F("downloadFile: ");
+      log += file_save;
+      log += F(" Success");
+      addLog(LOG_LEVEL_INFO, log);
+    }
     return true;
   }
-  error = F("Failed to open file for writing");
+  error = F("Failed to open file for writing: ");
+  error += file_save;
   addLog(LOG_LEVEL_ERROR, error);
   return false;
 }
 
-#endif // USE_SETTINGS_ARCHIVE
+#endif

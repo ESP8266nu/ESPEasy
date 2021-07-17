@@ -3,7 +3,8 @@
 
 #include <FS.h>
 
-
+#include "../DataStructs/ProvisioningStruct.h"
+#include "../DataTypes/ESPEasyFileType.h"
 #include "../DataTypes/SettingsType.h"
 #include "../Globals/Plugins.h"
 #include "../Globals/CPlugins.h"
@@ -159,6 +160,22 @@ String SaveCustomControllerSettings(controllerIndex_t ControllerIndex, uint8_t *
  \*********************************************************************************************/
 String LoadCustomControllerSettings(controllerIndex_t ControllerIndex, uint8_t *memAddress, int datasize);
 
+
+#ifdef USE_CUSTOM_PROVISIONING
+/********************************************************************************************\
+   Save Provisioning Settings
+ \*********************************************************************************************/
+String saveProvisioningSettings(ProvisioningStruct& ProvisioningSettings);
+
+/********************************************************************************************\
+   Load Provisioning Settings
+ \*********************************************************************************************/
+String loadProvisioningSettings(ProvisioningStruct& ProvisioningSettings);
+#endif
+
+
+
+
 /********************************************************************************************\
    Save Controller settings to file system
  \*********************************************************************************************/
@@ -182,7 +199,16 @@ String InitFile(SettingsType::SettingsFileEnum file_type);
 /********************************************************************************************\
    Save data into config file on file system
  \*********************************************************************************************/
+// Save to file in r+ mode
+// Open for reading and writing.  
+// The stream is positioned at the beginning of the file.
 String SaveToFile(const char *fname, int index, const uint8_t *memAddress, int datasize);
+
+// Save to file in w+ mode
+// Open for reading and writing.  
+// The file is created if it does not exist, otherwise it is truncated.
+// The stream is positioned at the beginning of the file.
+String SaveToFile_trunc(const char *fname, int index, const byte *memAddress, int datasize);
 
 // See for mode description: https://github.com/esp8266/Arduino/blob/master/doc/filesystem.rst
 String doSaveToFile(const char *fname, int index, const uint8_t *memAddress, int datasize, const char *mode);
@@ -256,6 +282,22 @@ String getPartitionTableHeader(const String& itemSep, const String& lineEnd);
 String getPartitionTable(uint8_t pType, const String& itemSep, const String& lineEnd);
 
 #endif // ifdef ESP32
+
+
+/********************************************************************************************\
+   Download ESPEasy file types from HTTP server
+ \*********************************************************************************************/
+#ifdef USE_DOWNLOAD
+String downloadFileType(const String& url, const String& user, const String& pass, FileType::Enum filetype, unsigned int filenr = 0);
+
+#endif
+#ifdef USE_CUSTOM_PROVISIONING
+// Download file type based on settings stored in provisioning.dat file.
+String downloadFileType(FileType::Enum filetype, unsigned int filenr = 0);
+
+#endif
+
+
 
 
 #endif // HELPERS_ESPEASY_STORAGE_H

@@ -94,6 +94,39 @@ void ResetFactoryDefaultPreference_struct::deleteFirst(bool checked) {
   bitWrite(_preference, 21, checked);
 }
 
+bool ResetFactoryDefaultPreference_struct::saveURL() const {
+  return bitRead(_preference, 22);
+}
+
+void ResetFactoryDefaultPreference_struct::saveURL(bool checked) {
+  bitWrite(_preference, 22, checked);
+}
+
+bool ResetFactoryDefaultPreference_struct::allowFetchByCommand() const {
+  return bitRead(_preference, 23);
+}
+
+void ResetFactoryDefaultPreference_struct::allowFetchByCommand(bool checked) {
+  bitWrite(_preference, 23, checked);
+}
+
+bool ResetFactoryDefaultPreference_struct::storeCredentials() const {
+  return bitRead(_preference, 24);
+}
+
+void ResetFactoryDefaultPreference_struct::storeCredentials(bool checked) {
+  bitWrite(_preference, 24, checked);
+}
+
+bool ResetFactoryDefaultPreference_struct::fetchProvisioningDat() const {
+  return bitRead(_preference, 25);
+}
+
+void ResetFactoryDefaultPreference_struct::fetchProvisioningDat(bool checked) {
+  bitWrite(_preference, 25, checked);
+}
+
+
 uint32_t ResetFactoryDefaultPreference_struct::getPreference() {
   return _preference;
 }

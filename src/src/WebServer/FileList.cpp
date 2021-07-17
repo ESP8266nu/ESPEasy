@@ -243,7 +243,7 @@ void handle_filelist() {
 void handle_filelist_add_file(const String& filename, int filesize, int startIdx) {
   html_TR_TD();
 
-  if ((filename != F(FILE_CONFIG)) && (filename != F(FILE_SECURITY)) && (filename != F(FILE_NOTIFICATION)))
+  if (!isProtectedFileType(filename))
   {
     html_add_button_prefix();
     addHtml(F("filelist?delete="));
@@ -454,7 +454,7 @@ void handle_SDfilelist() {
     else
     {
 
-      if ((entry.name() != String(F(FILE_CONFIG)).c_str()) && (entry.name() != String(F(FILE_SECURITY)).c_str()))
+      if (isProtectedFileType(String(entry.name())))
       {
         addHtml(F("<a class='button link' onclick=\"return confirm('Delete this file?')\" href=\"SDfilelist?delete="));
         String html;

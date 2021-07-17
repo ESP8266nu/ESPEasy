@@ -3,10 +3,10 @@
 
 #include "../../_Plugin_Helper.h"
 
+#include "../Commands/GPIO.h"
 #include "../DataStructs/TimingStats.h"
 
 #include "../ESPEasyCore/ESPEasyRules.h"
-#include "../Commands/GPIO.h"
 
 #include "../Globals/Cache.h"
 #include "../Globals/Plugins_other.h"

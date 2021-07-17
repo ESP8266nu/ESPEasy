@@ -16,6 +16,9 @@
 #include "../DataStructs/NodeStruct.h"
 #include "../DataStructs/PortStatusStruct.h"
 #include "../DataStructs/ProtocolStruct.h"
+#ifdef USE_CUSTOM_PROVISIONING
+#include "../DataStructs/ProvisioningStruct.h"
+#endif
 #include "../DataStructs/RTCStruct.h"
 #include "../DataStructs/SecurityStruct.h"
 #include "../DataStructs/SettingsStruct.h"
@@ -75,6 +78,9 @@ void run_compiletime_checks() {
   #endif
   #ifdef ESP8266
   const unsigned int SettingsStructSize = (288 + 84 * TASKS_MAX);
+  #endif
+  #ifdef USE_CUSTOM_PROVISIONING
+  check_size<ProvisioningStruct,                    256u>();  
   #endif
   check_size<SettingsStruct,                        SettingsStructSize>();
   check_size<ControllerSettingsStruct,              820u>();

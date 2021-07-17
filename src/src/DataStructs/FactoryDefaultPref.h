@@ -40,16 +40,27 @@ struct ResetFactoryDefaultPreference_struct {
   bool fetchConfigDat() const;
   void fetchConfigDat(bool fetch);
 
+  bool fetchProvisioningDat() const;
+  void fetchProvisioningDat(bool fetch);  
+
   bool deleteFirst() const;
   void deleteFirst(bool checked);
 
+  bool saveURL() const;
+  void saveURL(bool checked);
+
+  bool allowFetchByCommand() const;
+  void allowFetchByCommand(bool checked);
+
+  bool storeCredentials() const;
+  void storeCredentials(bool checked);
   
   uint32_t getPreference();
 
   // TODO TD-er: Add extra flags for settings to keep/set when reset to default.
 
 private:
-  uint32_t _preference;
+  uint32_t _preference = 0;
 };
 
 

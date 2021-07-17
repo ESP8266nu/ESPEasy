@@ -9,10 +9,12 @@
 #include "../WebServer/Markup_Forms.h"
 
 #include "../Globals/ResetFactoryDefaultPref.h"
+
 #include "../Helpers/ESPEasy_FactoryDefault.h"
 #include "../Helpers/ESPEasy_Storage.h"
 #include "../Helpers/Misc.h"
 #include "../Helpers/Networking.h"
+#include "../Helpers/StringParser.h"
 
 
 // ********************************************************************************
@@ -34,24 +36,52 @@ void handle_settingsarchive() {
 
   if (web_server.hasArg(F("savepref")) || web_server.hasArg(F("download"))) {
     // User choose a pre-defined config and wants to save it as the new default.
-    storeDownloadFiletypeCheckbox(FileType::CONFIG_DAT);
-    storeDownloadFiletypeCheckbox(FileType::SECURITY_DAT);
-    storeDownloadFiletypeCheckbox(FileType::NOTIFICATION_DAT);
-
-    for (int i = 0; i < 4; ++i) {
-      storeDownloadFiletypeCheckbox(FileType::RULES_TXT, i);
+    for (int i = 0; i < FileType::MAX_FILETYPE; ++i) {
+      const FileType::Enum ft = static_cast<FileType::Enum>(i);
+      if (ft == FileType::RULES_TXT) {
+        for (int i = 0; i < 4; ++i) {
+          storeDownloadFiletypeCheckbox(FileType::RULES_TXT, i);
+        }
+      } else {
+        storeDownloadFiletypeCheckbox(ft);
+      }
     }
 
-    ResetFactoryDefaultPreference.deleteFirst(isFormItemChecked("del"));
-
+    ResetFactoryDefaultPreference.deleteFirst(isFormItemChecked(F("del")));
+#ifdef USE_CUSTOM_PROVISIONING
+    ResetFactoryDefaultPreference.saveURL(isFormItemChecked(F("saveurl")));
+    ResetFactoryDefaultPreference.allowFetchByCommand(isFormItemChecked(F("allowcommand")));
+    ResetFactoryDefaultPreference.storeCredentials(isFormItemChecked(F("savecred")));
+#endif
     applyFactoryDefaultPref();
-    addHtmlError(SaveSettings());
+
+    String error;
+    #ifdef USE_CUSTOM_PROVISIONING
+    {
+      MakeProvisioningSettings(ProvisioningSettings);
+      if (AllocatedProvisioningSettings()) {
+        ProvisioningSettings.ResetFactoryDefaultPreference = ResetFactoryDefaultPreference.getPreference();
+        if (ResetFactoryDefaultPreference.saveURL()) {
+          ProvisioningSettings.setUrl(web_server.arg(F("url")));
+        }
+        if (ResetFactoryDefaultPreference.storeCredentials()) {
+          ProvisioningSettings.setUser(web_server.arg(F("user")));
+          ProvisioningSettings.setPass(web_server.arg(F("pass")));
+        }
+      }
+      error += saveProvisioningSettings(ProvisioningSettings);
+    }
+    #endif
+
+    error += SaveSettings();
+    addHtmlError(error);
   }
 
   bool showOptions = true;
 
   if (web_server.hasArg(F("download"))) {
     // Try downloading files.
+    // Don't use the ProvisioningSettings, as not all may be stored.
     String url  = webArg(F("url"));
     String user = webArg(F("user"));
     String pass = webArg(F("pass"));
@@ -59,14 +89,23 @@ void handle_settingsarchive() {
     addTableSeparator(F("Download result"), 2, 3);
     bool somethingDownloaded = false;
 
-    if (tryDownloadFileType(url, user, pass, FileType::CONFIG_DAT)) { somethingDownloaded = true; }
-
-    if (tryDownloadFileType(url, user, pass, FileType::SECURITY_DAT)) { somethingDownloaded = true; }
-
-    if (tryDownloadFileType(url, user, pass, FileType::NOTIFICATION_DAT)) { somethingDownloaded = true; }
+    for (int i = 0; i < FileType::MAX_FILETYPE; ++i) {
+      const FileType::Enum ft = static_cast<FileType::Enum>(i);
+      if (ft != FileType::RULES_TXT) {
+        if (getDownloadFiletypeChecked(ft, 0)) {
+          if (tryDownloadFileType(url, user, pass, ft)) {
+            somethingDownloaded = true; 
+          }
+        }
+      }
+    }
 
     for (int i = 0; i < 4; ++i) {
-      if (tryDownloadFileType(url, user, pass, FileType::RULES_TXT, i)) { somethingDownloaded = true; }
+      if (getDownloadFiletypeChecked(FileType::RULES_TXT, i)) {
+        if (tryDownloadFileType(url, user, pass, FileType::RULES_TXT, i)) { 
+          somethingDownloaded = true; 
+        }
+      }
     }
 
     if (somethingDownloaded) {
@@ -83,14 +122,45 @@ void handle_settingsarchive() {
 
   if (showOptions) {
     // Nothing chosen yet, show options.
+    addTableSeparator(F("Archive Location"), 2, 3);
 
-    addTableSeparator(F("Files to Download"), 2, 3);
-    addDownloadFiletypeCheckbox(FileType::CONFIG_DAT);
-    addDownloadFiletypeCheckbox(FileType::SECURITY_DAT);
-    addDownloadFiletypeCheckbox(FileType::NOTIFICATION_DAT);
+    {
+      String url, user, pass;
 
-    for (int i = 0; i < 4; ++i) {
-      addDownloadFiletypeCheckbox(FileType::RULES_TXT, i);
+      {
+        #ifdef USE_CUSTOM_PROVISIONING
+        {
+          MakeProvisioningSettings(ProvisioningSettings);
+          if (AllocatedProvisioningSettings()) {
+            loadProvisioningSettings(ProvisioningSettings);
+            url = ProvisioningSettings.url;
+            user = ProvisioningSettings.user;
+            pass = ProvisioningSettings.pass;
+          }
+        }
+        #endif
+
+        if (web_server.arg(F("url")).length() != 0) {
+          url = web_server.arg(F("url"));
+        }
+        if (web_server.arg(F("user")).length() != 0) {
+          user = web_server.arg(F("user"));
+        }
+        if (web_server.arg(F("pass")).length() != 0) {
+          pass = web_server.arg(F("pass"));
+        }
+      }
+
+      addFormTextBox(F("URL with settings"), F("url"), url, 256);
+      addFormNote(F("Only HTTP supported. Do not include filename. URL is allowed to contain system variables."));
+      #ifdef USE_CUSTOM_PROVISIONING
+      addFormCheckBox(F("Store URL"), F("saveurl"), ResetFactoryDefaultPreference.saveURL());
+      #endif
+      addFormTextBox(F("User"), F("user"), user, 64);
+      addFormPasswordBox(F("Pass"), F("pass"), pass, 64);
+      #ifdef USE_CUSTOM_PROVISIONING
+      addFormCheckBox(F("Store Credentials"), F("savecred"), ResetFactoryDefaultPreference.storeCredentials());
+      #endif
     }
 
     addTableSeparator(F("Download Settings"), 2, 3);
@@ -98,19 +168,28 @@ void handle_settingsarchive() {
     addRowLabel(F("Delete First"));
     addCheckBox(F("del"), ResetFactoryDefaultPreference.deleteFirst());
     addFormNote(F("Needed on filesystem with not enough free space. Use with care!"));
+    #ifdef USE_CUSTOM_PROVISIONING
+    addFormCheckBox(F("Allow Fetch by Command"), F("allowcommand"), ResetFactoryDefaultPreference.allowFetchByCommand());
+    addFormNote(F("Fetch files via a command does need stored URL (+ credentials)"));
+    #endif
 
+    addTableSeparator(F("Files to Download"), 2, 3);
+    for (int i = 0; i < FileType::MAX_FILETYPE; ++i) {
+      const FileType::Enum ft = static_cast<FileType::Enum>(i);
+      if (ft != FileType::RULES_TXT) {
+        addDownloadFiletypeCheckbox(ft);
+      }
+    }
+
+    for (int i = 0; i < 4; ++i) {
+      addDownloadFiletypeCheckbox(FileType::RULES_TXT, i);
+    }
 
     html_TR_TD();
     html_TD();
     addSubmitButton(F("Save Preferences"), F("savepref"));
 
-    addTableSeparator(F("Archive Location"), 2, 3);
-
-    addFormTextBox(F("URL with settings"), F("url"), webArg(F("url")), 256);
-    addFormNote(F("Only HTTP supported. Do not include filename"));
-    addFormTextBox(F("User"), F("user"), webArg(F("user")), 64);
-    addFormPasswordBox(F("Pass"), F("pass"), webArg(F("pass")), 64);
-    addFormNote(F("URL, user and pass will not be stored"));
+    addFormSeparator(2);
 
     addRowLabel(F("Try download files"));
     addSubmitButton(F("Download"), F("download"), F("red"));
@@ -125,18 +204,6 @@ void handle_settingsarchive() {
 // ********************************************************************************
 // download filetype selectors
 // ********************************************************************************
-bool getDownloadFiletypeChecked(FileType::Enum filetype, unsigned int filenr) {
-  bool isChecked = false;
-
-  switch (filetype) {
-    case FileType::CONFIG_DAT: isChecked       = ResetFactoryDefaultPreference.fetchConfigDat(); break;
-    case FileType::SECURITY_DAT: isChecked     = ResetFactoryDefaultPreference.fetchSecurityDat(); break;
-    case FileType::NOTIFICATION_DAT: isChecked = ResetFactoryDefaultPreference.fetchNotificationDat(); break;
-    case FileType::RULES_TXT: isChecked        = ResetFactoryDefaultPreference.fetchRulesTXT(filenr); break;
-  }
-  return isChecked;
-}
-
 void addDownloadFiletypeCheckbox(FileType::Enum filetype, unsigned int filenr) {
   String filetype_str = getFileName(filetype, filenr);
   String label        = F("Fetch ");
@@ -155,60 +222,23 @@ void storeDownloadFiletypeCheckbox(FileType::Enum filetype, unsigned int filenr)
     case FileType::SECURITY_DAT: ResetFactoryDefaultPreference.fetchSecurityDat(isChecked); break;
     case FileType::NOTIFICATION_DAT: ResetFactoryDefaultPreference.fetchNotificationDat(isChecked); break;
     case FileType::RULES_TXT: { ResetFactoryDefaultPreference.fetchRulesTXT(filenr, isChecked); break; }
+    case FileType::PROVISIONING_DAT: { ResetFactoryDefaultPreference.fetchProvisioningDat(isChecked); break; }
+    case FileType::MAX_FILETYPE: 
+      break;
+    
   }
 }
 
 bool tryDownloadFileType(const String& url, const String& user, const String& pass, FileType::Enum filetype, unsigned int filenr) {
-  if (!getDownloadFiletypeChecked(filetype, filenr)) {
-    // Not selected, so not downloaded
-    return false;
-  }
-  String filename = getFileName(filetype, filenr);
-  bool   res      = false;
-  String error;
-
+  const String filename = getFileName(filetype, filenr);
   addRowLabel(filename);
-
-  if (ResetFactoryDefaultPreference.deleteFirst()) {
-    if (!fileExists(filename) || tryDeleteFile(filename)) {
-      res = downloadFile(url + filename, filename, user, pass, error);
-    } else {
-      error = F("Could not delete existing file");
-    }
-  } else {
-    String tmpfile = filename;
-    tmpfile += F(".tmp");
-    res      = downloadFile(url + filename, tmpfile, user, pass, error);
-
-    if (res) {
-      String filename_bak = filename;
-      filename_bak += F("_bak");
-
-      if (fileExists(filename) && !tryRenameFile(filename, filename_bak)) {
-        res   = false;
-        error = F("Could not rename to _bak");
-      } else {
-        // File does not exist (anymore)
-        if (!tryRenameFile(tmpfile, filename)) {
-          res   = false;
-          error = F("Could not rename tmp file");
-
-          if (tryRenameFile(filename_bak, filename)) {
-            error += F("... reverted");
-          } else {
-            error += F(" Not reverted!");
-          }
-        }
-      }
-    }
-  }
-
-  if (!res) {
-    addHtml(error);
-  }  else {
+  const String error = downloadFileType(url, user, pass, filetype, filenr);
+  if (error.length() == 0) {
     addHtml(F("Success"));
+    return true;
   }
-  return res;
+  addHtml(error);
+  return false;
 }
 
 #endif // ifdef USE_SETTINGS_ARCHIVE

@@ -309,6 +309,55 @@
 #define DEFAULT_SYNC_UDP_PORT                   0                       // Used for ESPEasy p2p. (IANA registered port: 8266)
 #endif
 
+// --- Defaults to be used for custom automatic provisioning builds ------------------------------------
+#ifdef USE_CUSTOM_PROVISIONING
+  #ifndef DEFAULT_FACTORY_DEFAULT_DEVICE_MODEL
+    #define DEFAULT_FACTORY_DEFAULT_DEVICE_MODEL  0 // DeviceModel_default
+  #endif
+  #ifndef DEFAULT_PROVISIONING_FETCH_RULES1
+    #define DEFAULT_PROVISIONING_FETCH_RULES1      false
+  #endif
+  #ifndef DEFAULT_PROVISIONING_FETCH_RULES2
+    #define DEFAULT_PROVISIONING_FETCH_RULES2      false
+  #endif
+  #ifndef DEFAULT_PROVISIONING_FETCH_RULES3
+    #define DEFAULT_PROVISIONING_FETCH_RULES3      false
+  #endif
+  #ifndef DEFAULT_PROVISIONING_FETCH_RULES4
+    #define DEFAULT_PROVISIONING_FETCH_RULES4      false
+  #endif
+  #ifndef DEFAULT_PROVISIONING_FETCH_NOTIFICATIONS
+    #define DEFAULT_PROVISIONING_FETCH_NOTIFICATIONS false
+  #endif
+  #ifndef DEFAULT_PROVISIONING_FETCH_SECURITY
+    #define DEFAULT_PROVISIONING_FETCH_SECURITY     false
+  #endif
+  #ifndef DEFAULT_PROVISIONING_FETCH_CONFIG
+    #define DEFAULT_PROVISIONING_FETCH_CONFIG       false
+  #endif
+  #ifndef DEFAULT_PROVISIONING_FETCH_PROVISIONING
+    #define DEFAULT_PROVISIONING_FETCH_PROVISIONING false
+  #endif
+  #ifndef DEFAULT_PROVISIONING_SAVE_URL
+    #define DEFAULT_PROVISIONING_SAVE_URL           false
+  #endif
+  #ifndef DEFAULT_PROVISIONING_SAVE_CREDENTIALS
+    #define DEFAULT_PROVISIONING_SAVE_CREDENTIALS   false
+  #endif
+  #ifndef DEFAULT_PROVISIONING_ALLOW_FETCH_COMMAND
+    #define DEFAULT_PROVISIONING_ALLOW_FETCH_COMMAND false
+  #endif
+  #ifndef DEFAULT_PROVISIONING_URL
+    #define DEFAULT_PROVISIONING_URL                ""
+  #endif
+  #ifndef DEFAULT_PROVISIONING_USER
+    #define DEFAULT_PROVISIONING_USER               ""
+  #endif
+  #ifndef DEFAULT_PROVISIONING_PASS
+    #define DEFAULT_PROVISIONING_PASS               ""
+  #endif
+#endif
+
 /*
 // --- Experimental Advanced Settings (NOT ACTIVES at this time) ------------------------------------
 

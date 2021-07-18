@@ -52,39 +52,85 @@ const __FlashStringHelper * getLastBootCauseString() {
 }
 
 #ifdef ESP32
+ #ifdef ESP32S2
+  #include <esp32s2/rom/rtc.h>
+ #else
+  #include <rom/rtc.h>
+ #endif
 
-#include <rom/rtc.h>
 
 // See https://github.com/espressif/esp-idf/blob/master/components/esp32/include/rom/rtc.h
 String getResetReasonString(uint8_t icore) {
   bool isDEEPSLEEP_RESET(false);
 
+  #ifdef ESP32S2
+
+	// See tools\sdk\esp32\include\esp_rom\include\esp32s2\rom\rtc.h
+  switch (rtc_get_reset_reason(icore)) {
+    case POWERON_RESET:          return F("Vbat power on reset");                              // 1
+    case RTC_SW_SYS_RESET:       return F("Software reset digital core");                      // 3
+    case DEEPSLEEP_RESET:        isDEEPSLEEP_RESET = true; break;                              // 5
+    case TG0WDT_SYS_RESET:       return F("Timer Group0 Watch dog reset digital core");        // 7
+    case TG1WDT_SYS_RESET:       return F("Timer Group1 Watch dog reset digital core");        // 8
+    case RTCWDT_SYS_RESET:       return F("RTC Watch dog Reset digital core");                 // 9
+    case INTRUSION_RESET:        return F("Instrusion tested to reset CPU");                   // 10
+    case TG0WDT_CPU_RESET:       return F("Time Group0 reset CPU");                            // 11
+    case RTC_SW_CPU_RESET:       return F("Software reset CPU");                               // 12
+    case RTCWDT_CPU_RESET:       return F("RTC Watch dog Reset CPU");                          // 13
+    case RTCWDT_BROWN_OUT_RESET: return F("Reset when the vdd voltage is not stable");         // 15
+    case RTCWDT_RTC_RESET:       return F("RTC Watch dog reset digital core and rtc module");  // 16
+    case TG1WDT_CPU_RESET:       return F("Time Group1 reset CPU");                            // 17
+    case SUPER_WDT_RESET:        return F("Super watchdog reset digital core and rtc module"); // 18
+    case GLITCH_RTC_RESET:       return F("Glitch reset digital core and rtc module");         // 19
+  }
+
+  #else
+
+  // See https://github.com/espressif/esp-idf/blob/master/components/esp32/include/rom/rtc.h
   switch (rtc_get_reset_reason((RESET_REASON)icore)) {
-    case NO_MEAN: return F("NO_MEAN");
-    case POWERON_RESET: return F("Vbat power on reset");
-    case SW_RESET: return F("Software reset digital core");
-    case OWDT_RESET: return F("Legacy watch dog reset digital core");
-    case DEEPSLEEP_RESET: isDEEPSLEEP_RESET = true; break;
-    case SDIO_RESET: return F("Reset by SLC module, reset digital core");
-    case TG0WDT_SYS_RESET: return F("Timer Group0 Watch dog reset digital core");
-    case TG1WDT_SYS_RESET: return F("Timer Group1 Watch dog reset digital core");
-    case RTCWDT_SYS_RESET: return F("RTC Watch dog Reset digital core");
-    case INTRUSION_RESET: return F("Instrusion tested to reset CPU");
-    case TGWDT_CPU_RESET: return F("Time Group reset CPU");
-    case SW_CPU_RESET: return F("Software reset CPU");
-    case RTCWDT_CPU_RESET: return F("RTC Watch dog Reset CPU");
-    case EXT_CPU_RESET: return F("for APP CPU, reseted by PRO CPU");
+    case NO_MEAN:                return F("NO_MEAN");
+    case POWERON_RESET:          return F("Vbat power on reset");
+    case SW_RESET:               return F("Software reset digital core");
+    case OWDT_RESET:             return F("Legacy watch dog reset digital core");
+    case DEEPSLEEP_RESET:        isDEEPSLEEP_RESET = true; break;
+    case SDIO_RESET:             return F("Reset by SLC module, reset digital core");
+    case TG0WDT_SYS_RESET:       return F("Timer Group0 Watch dog reset digital core");
+    case TG1WDT_SYS_RESET:       return F("Timer Group1 Watch dog reset digital core");
+    case RTCWDT_SYS_RESET:       return F("RTC Watch dog Reset digital core");
+    case INTRUSION_RESET:        return F("Instrusion tested to reset CPU");
+    case TGWDT_CPU_RESET:        return F("Time Group reset CPU");
+    case SW_CPU_RESET:           return F("Software reset CPU");
+    case RTCWDT_CPU_RESET:       return F("RTC Watch dog Reset CPU");
+    case EXT_CPU_RESET:          return F("for APP CPU, reseted by PRO CPU");
     case RTCWDT_BROWN_OUT_RESET: return F("Reset when the vdd voltage is not stable");
-    case RTCWDT_RTC_RESET: return F("RTC Watch dog reset digital core and rtc module");
+    case RTCWDT_RTC_RESET:       return F("RTC Watch dog reset digital core and rtc module");
     default: break;
   }
+  #endif
 
   if (isDEEPSLEEP_RESET) {
     String reason = F("Deep Sleep, Wakeup reason (");
     reason += rtc_get_wakeup_cause();
     reason += ')';
+
+/*
+  switch (reason) {
+  #if CONFIG_IDF_TARGET_ESP32
+    case POWERON_RESET:
+    case SW_CPU_RESET:
+    case DEEPSLEEP_RESET:
+    case SW_RESET:
+  #elif CONFIG_IDF_TARGET_ESP32S2
+    case POWERON_RESET:
+    case RTC_SW_CPU_RESET:
+    case DEEPSLEEP_RESET:
+    case RTC_SW_SYS_RESET:
+  #endif
+  }
+*/
     return reason;
   }
+
   return getUnknownString();
 }
 

@@ -21,10 +21,13 @@
 #include "../Helpers/StringConverter.h"
 #include "../Helpers/StringGenerator_WiFi.h"
 
+#ifdef ESP32
+#include <WiFiGeneric.h>
+#endif
+
 // FIXME TD-er: Cleanup of WiFi code
 #ifdef ESPEASY_WIFI_CLEANUP_WORK_IN_PROGRESS
 bool ESPEasyWiFi_t::begin() {
-
   return true;
 }
 
@@ -547,6 +550,10 @@ void initWiFi()
   WiFi.disconnect(true);
   setWifiMode(WIFI_OFF);
 
+#if defined(ESP32)
+#ifndef ESP32S2
+  wm_event_id = WiFi.onEvent(WiFiEvent_cb);
+#endif
 #if defined(ESP32)
   wm_event_id = WiFi.onEvent(WiFiEvent);
 #endif

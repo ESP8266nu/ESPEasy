@@ -381,7 +381,9 @@ int espeasy_analogRead(int pin, bool readAsTouch) {
 
     switch (adc) {
       case 0:
+      #ifndef ESP32S2
         value = hallRead();
+      #endif
         break;
       case 1:
         canread = true;
@@ -496,6 +498,9 @@ uint8_t getChipCores() {
 
 const __FlashStringHelper * getChipModel() {
 #ifdef ESP32
+  #ifdef ESP32S2
+    return F("ESP32S2");
+  #else
   {
     uint32_t chip_ver = REG_GET_FIELD(EFUSE_BLK0_RDATA3_REG, EFUSE_RD_CHIP_VER_PKG);
     uint32_t pkg_ver = chip_ver & 0x7;
@@ -514,6 +519,7 @@ const __FlashStringHelper * getChipModel() {
         break;
     }
   }
+  #endif
 #elif defined(ESP8285)
   return F("ESP8285");
 #elif defined(ESP8266)
@@ -1036,7 +1042,9 @@ bool getADC_gpio_info(int gpio_pin, int& adc, int& ch, int& t)
 int touchPinToGpio(int touch_pin)
 {
   switch (touch_pin) {
+    #ifndef ESP32S2
     case 0: return T0;
+    #endif
     case 1: return T1;
     case 2: return T2;
     case 3: return T3;

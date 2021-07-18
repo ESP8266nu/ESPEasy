@@ -192,7 +192,9 @@ void P097_setEventParams(int pin, uint16_t threshold) {
 
   if (getADC_gpio_info(pin, adc, ch, t)) {
     switch (t) {
+      #ifndef ESP32S2
       case 0: touchAttachInterrupt(T0, P097_got_T0, threshold); break;
+      #endif
       case 1: touchAttachInterrupt(T1, P097_got_T1, threshold); break;
       case 2: touchAttachInterrupt(T2, P097_got_T2, threshold); break;
       case 3: touchAttachInterrupt(T3, P097_got_T3, threshold); break;

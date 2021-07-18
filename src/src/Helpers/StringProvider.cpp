@@ -58,10 +58,14 @@ const __FlashStringHelper * getLabel(LabelType::Enum label) {
     case LabelType::FREE_MEM:               return F("Free RAM");
     case LabelType::FREE_STACK:             return F("Free Stack");
 #if defined(CORE_POST_2_5_0) || defined(ESP32)
+  #ifndef LIMIT_BUILD_SIZE
     case LabelType::HEAP_MAX_FREE_BLOCK:    return F("Heap Max Free Block");
+  #endif
 #endif // if defined(CORE_POST_2_5_0) || defined(ESP32)
 #if defined(CORE_POST_2_5_0)
+  #ifndef LIMIT_BUILD_SIZE
     case LabelType::HEAP_FRAGMENTATION:     return F("Heap Fragmentation");
+  #endif
 #endif // if defined(CORE_POST_2_5_0)
 
 #ifdef ESP32
@@ -225,13 +229,19 @@ String getValue(LabelType::Enum label) {
     case LabelType::FREE_MEM:               return String(ESP.getFreeHeap());
     case LabelType::FREE_STACK:             return String(getCurrentFreeStack());
 #if defined(CORE_POST_2_5_0)
+  #ifndef LIMIT_BUILD_SIZE
     case LabelType::HEAP_MAX_FREE_BLOCK:    return String(ESP.getMaxFreeBlockSize());
+  #endif
 #endif // if defined(CORE_POST_2_5_0)
 #if  defined(ESP32)
+  #ifndef LIMIT_BUILD_SIZE
     case LabelType::HEAP_MAX_FREE_BLOCK:    return String(ESP.getMaxAllocHeap());
+  #endif
 #endif // if  defined(ESP32)
 #if defined(CORE_POST_2_5_0)
+  #ifndef LIMIT_BUILD_SIZE
     case LabelType::HEAP_FRAGMENTATION:     return String(ESP.getHeapFragmentation());
+  #endif
 #endif // if defined(CORE_POST_2_5_0)
 #ifdef ESP32
     case LabelType::HEAP_SIZE:              return String(ESP.getHeapSize());

@@ -100,7 +100,10 @@ HardwareSerial * ESPeasySerial::getHW() {
   switch (_serialtype) {
     case ESPEasySerialPort::serial0: return &Serial;
     case ESPEasySerialPort::serial1: return &Serial1;
-    case ESPEasySerialPort::serial2: return &Serial2;
+    case ESPEasySerialPort::serial2: 
+    #ifndef ESP32S2
+      return &Serial2;
+    #endif
 
     default: break;
   }
@@ -111,7 +114,10 @@ const HardwareSerial * ESPeasySerial::getHW() const {
   switch (_serialtype) {
     case ESPEasySerialPort::serial0: return &Serial;
     case ESPEasySerialPort::serial1: return &Serial1;
-    case ESPEasySerialPort::serial2: return &Serial2;
+    case ESPEasySerialPort::serial2: 
+    #ifndef ESP32S2
+      return &Serial2;
+    #endif
     default: break;
   }
   return nullptr;

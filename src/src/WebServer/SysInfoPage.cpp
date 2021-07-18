@@ -350,9 +350,12 @@ void handle_sysinfo_memory() {
     addHtml(html);
   }
 # if defined(CORE_POST_2_5_0) || defined(ESP32)
+ #ifndef LIMIT_BUILD_SIZE
   addRowLabelValue(LabelType::HEAP_MAX_FREE_BLOCK);
+ #endif
 # endif // if defined(CORE_POST_2_5_0) || defined(ESP32)
 # if defined(CORE_POST_2_5_0)
+  #ifndef LIMIT_BUILD_SIZE
   addRowLabelValue(LabelType::HEAP_FRAGMENTATION);
   addHtml('%');
 # endif // ifdef CORE_POST_2_5_0

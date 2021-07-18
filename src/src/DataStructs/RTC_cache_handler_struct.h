@@ -7,6 +7,7 @@
 #include "../../ESPEasy_common.h"
 
 #include <FS.h>
+#include <vector>
 
 
 // Locations where to store the cached data

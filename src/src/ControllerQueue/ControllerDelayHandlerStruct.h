@@ -73,7 +73,7 @@ struct ControllerDelayHandlerStruct {
       return false;
     }
     if (Protocol[protocolIndex].needsNetwork) {
-      return NetworkConnected(10);
+      return NetworkConnected(NETWORK_CONNECTED_TIMEOUT);
     }
     return true;
   }

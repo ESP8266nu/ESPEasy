@@ -323,7 +323,7 @@ void checkUDP()
 \*********************************************************************************************/
 void SendUDPCommand(uint8_t destUnit, const char *data, uint8_t dataLength)
 {
-  if (!NetworkConnected(10)) {
+  if (!NetworkConnected(NETWORK_CONNECTED_TIMEOUT)) {
     return;
   }
 
@@ -393,7 +393,7 @@ IPAddress getIPAddressForUnit(uint8_t unit) {
 \*********************************************************************************************/
 void sendUDP(uint8_t unit, const uint8_t *data, uint8_t size)
 {
-  if (!NetworkConnected(10)) {
+  if (!NetworkConnected(NETWORK_CONNECTED_TIMEOUT)) {
     return;
   }
 
@@ -459,7 +459,7 @@ void refreshNodeList()
 \*********************************************************************************************/
 void sendSysInfoUDP(uint8_t repeats)
 {
-  if ((Settings.UDPPort == 0) || !NetworkConnected(10)) {
+  if ((Settings.UDPPort == 0) || !NetworkConnected(NETWORK_CONNECTED_TIMEOUT)) {
     return;
   }
 
@@ -543,7 +543,7 @@ void sendSysInfoUDP(uint8_t repeats)
    Respond to HTTP XML requests for SSDP information
  \*********************************************************************************************/
 void SSDP_schema(WiFiClient& client) {
-  if (!NetworkConnected(10)) {
+  if (!NetworkConnected(NETWORK_CONNECTED_TIMEOUT)) {
     return;
   }
 

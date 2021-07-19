@@ -100,7 +100,7 @@ bool ControllerSettingsStruct::checkHostReachable(bool quick) {
     // No IP/hostname set
     return false;
   }
-  if (!NetworkConnected(10)) {
+  if (!NetworkConnected(NETWORK_CONNECTED_TIMEOUT)) {
     return false; // Not connected, so no use in wasting time to connect to a host.
   }
   delay(0);       // Make sure the Watchdog will not trigger a reset.

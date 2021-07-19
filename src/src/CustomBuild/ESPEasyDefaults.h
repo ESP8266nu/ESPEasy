@@ -116,6 +116,10 @@
 #define DEFAULT_DONT_ALLOW_START_AP      false // Usually the AP will be started when no WiFi is defined, or the defined one cannot be found. This flag may prevent it.     
 #endif
 
+#ifndef NETWORK_CONNECTED_TIMEOUT
+#define NETWORK_CONNECTED_TIMEOUT         100
+#endif
+
 // --- Default Controller ------------------------------------------------------------------------------
 #ifndef DEFAULT_CONTROLLER
 #define DEFAULT_CONTROLLER   true              // true or false enabled or disabled, set 1st controller defaults

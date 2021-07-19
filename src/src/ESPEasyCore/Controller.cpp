@@ -303,7 +303,7 @@ String getMQTTclientID(const ControllerSettingsStruct& ControllerSettings) {
 \*********************************************************************************************/
 bool MQTTCheck(controllerIndex_t controller_idx)
 {
-  if (!NetworkConnected(10)) {
+  if (!NetworkConnected(NETWORK_CONNECTED_TIMEOUT)) {
     return false;
   }
   protocolIndex_t ProtocolIndex = getProtocolIndex_from_ControllerIndex(controller_idx);

@@ -81,7 +81,7 @@ bool CPlugin_013(CPlugin::Function function, struct EventStruct *event, String& 
 // ********************************************************************************
 void C013_SendUDPTaskInfo(uint8_t destUnit, uint8_t sourceTaskIndex, uint8_t destTaskIndex)
 {
-  if (!NetworkConnected(10)) {
+  if (!NetworkConnected(NETWORK_CONNECTED_TIMEOUT)) {
     return;
   }
 
@@ -126,7 +126,7 @@ void C013_SendUDPTaskInfo(uint8_t destUnit, uint8_t sourceTaskIndex, uint8_t des
 
 void C013_SendUDPTaskData(uint8_t destUnit, uint8_t sourceTaskIndex, uint8_t destTaskIndex)
 {
-  if (!NetworkConnected(10)) {
+  if (!NetworkConnected(NETWORK_CONNECTED_TIMEOUT)) {
     return;
   }
   struct C013_SensorDataStruct dataReply;
@@ -165,7 +165,7 @@ void C013_SendUDPTaskData(uint8_t destUnit, uint8_t sourceTaskIndex, uint8_t des
 \*********************************************************************************************/
 void C013_sendUDP(uint8_t unit, uint8_t *data, uint8_t size)
 {
-  if (!NetworkConnected(10)) {
+  if (!NetworkConnected(NETWORK_CONNECTED_TIMEOUT)) {
     return;
   }
   NodesMap::iterator it;

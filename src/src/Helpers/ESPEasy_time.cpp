@@ -209,7 +209,7 @@ bool ESPEasy_time::systemTimePresent() const {
 
 bool ESPEasy_time::getNtpTime(double& unixTime_d)
 {
-  if (!Settings.UseNTP || !NetworkConnected(10)) {
+  if (!Settings.UseNTP || !NetworkConnected(NETWORK_CONNECTED_TIMEOUT)) {
     return false;
   }
   IPAddress timeServerIP;

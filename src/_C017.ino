@@ -93,7 +93,7 @@ bool do_process_c017_delay_queue(int controller_number, const C017_queue_element
     return true; // exit if we don't have anything to send.
   }
 
-  if (!NetworkConnected(10))
+  if (!NetworkConnected(NETWORK_CONNECTED_TIMEOUT))
   {
     return false;
   }

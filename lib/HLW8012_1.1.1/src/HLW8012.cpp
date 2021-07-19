@@ -22,6 +22,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Arduino.h>
 #include "HLW8012.h"
 
+  #ifndef CORE_POST_3_0_0
+    #ifdef ESP8266
+      #define IRAM_ATTR ICACHE_RAM_ATTR
+    #endif
+  #endif
+
 void HLW8012::begin(
     unsigned char cf_pin,
     unsigned char cf1_pin,
@@ -177,14 +183,14 @@ void HLW8012::setResistors(double current, double voltage_upstream, double volta
     }
 }
 
-void ICACHE_RAM_ATTR HLW8012::cf_interrupt() {
+void IRAM_ATTR HLW8012::cf_interrupt() {
     unsigned long now = micros();
     _power_pulse_width = now - _last_cf_interrupt;
     _last_cf_interrupt = now;
     _pulse_count++;
 }
 
-void ICACHE_RAM_ATTR HLW8012::cf1_interrupt() {
+void IRAM_ATTR HLW8012::cf1_interrupt() {
 
     unsigned long now = micros();
 

@@ -15,6 +15,10 @@ bool init_mqtt_delay_queue(controllerIndex_t ControllerIndex, String& pubname, b
   }
   LoadControllerSettings(ControllerIndex, ControllerSettings);
   if (MQTTDelayHandler == nullptr) {
+    #ifdef USE_SECOND_HEAP
+    HeapSelectIram ephemeral;
+    #endif
+
     MQTTDelayHandler = new (std::nothrow) ControllerDelayHandlerStruct<MQTT_queue_element>;
   }
   if (MQTTDelayHandler == nullptr) {

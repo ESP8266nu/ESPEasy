@@ -129,7 +129,15 @@ bool CPlugin_011(CPlugin::Function function, struct EventStruct *event, String& 
 
     case CPlugin::Function::CPLUGIN_WEBFORM_SAVE:
     {
-      std::shared_ptr<C011_ConfigStruct> customConfig(new C011_ConfigStruct);
+      std::shared_ptr<C011_ConfigStruct> customConfig;
+      {
+        // Try to allocate on 2nd heap
+        #ifdef USE_SECOND_HEAP
+//        HeapSelectIram ephemeral;
+        #endif
+        std::shared_ptr<C011_ConfigStruct> tmp_shared(new (std::nothrow) C011_ConfigStruct);
+        customConfig = std::move(tmp_shared);
+      }
 
       if (customConfig) {
         uint8_t   choice    = 0;
@@ -211,7 +219,15 @@ bool do_process_c011_delay_queue(int controller_number, const C011_queue_element
 
 bool load_C011_ConfigStruct(controllerIndex_t ControllerIndex, String& HttpMethod, String& HttpUri, String& HttpHeader, String& HttpBody) {
   // Just copy the needed strings and destruct the C011_ConfigStruct as soon as possible
-  std::shared_ptr<C011_ConfigStruct> customConfig(new C011_ConfigStruct);
+  std::shared_ptr<C011_ConfigStruct> customConfig;
+  {
+    // Try to allocate on 2nd heap
+    #ifdef USE_SECOND_HEAP
+//    HeapSelectIram ephemeral;
+    #endif
+    std::shared_ptr<C011_ConfigStruct> tmp_shared(new (std::nothrow) C011_ConfigStruct);
+    customConfig = std::move(tmp_shared);
+  }
 
   if (!customConfig) {
     return false;

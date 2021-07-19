@@ -12,15 +12,19 @@ C018_queue_element::C018_queue_element(struct EventStruct *event, uint8_t sample
   TaskIndex(event->TaskIndex),
   controller_idx(event->ControllerIndex)
 {
-    # ifdef USES_PACKED_RAW_DATA
-  packed = getPackedFromPlugin(event, sampleSetCount);
+  # ifdef USES_PACKED_RAW_DATA
+    #ifdef USE_SECOND_HEAP
+    HeapSelectIram ephemeral;
+    #endif
 
-  if (loglevelActiveFor(LOG_LEVEL_INFO)) {
-    String log = F("C018 queue element: ");
-    log += packed;
-    addLog(LOG_LEVEL_INFO, log);
-  }
-    # endif // USES_PACKED_RAW_DATA
+    packed = getPackedFromPlugin(event, sampleSetCount);
+
+    if (loglevelActiveFor(LOG_LEVEL_INFO)) {
+      String log = F("C018 queue element: ");
+      log += packed;
+      addLog(LOG_LEVEL_INFO, log);
+    }
+  # endif // USES_PACKED_RAW_DATA
 }
 
 size_t C018_queue_element::getSize() const {

@@ -7,6 +7,7 @@ extern "C" {
 }
 #endif
 
+#include "../../ESPEasy_common.h"
 
 /*********************************************************************************************\
    Memory management
@@ -65,7 +66,7 @@ bool allocatedOnStack(const void *address) {
 /********************************************************************************************\
    Get free system mem
  \*********************************************************************************************/
-unsigned long FreeMem(void)
+unsigned long FreeMem()
 {
   #if defined(ESP8266)
   return system_get_free_heap_size();
@@ -74,6 +75,15 @@ unsigned long FreeMem(void)
   return ESP.getFreeHeap();
   #endif // if defined(ESP32)
 }
+
+#ifdef USE_SECOND_HEAP
+unsigned long FreeMem2ndHeap()
+{
+  HeapSelectIram ephemeral;
+  return ESP.getFreeHeap();
+}
+#endif
+
 
 unsigned long getMaxFreeBlock()
 {

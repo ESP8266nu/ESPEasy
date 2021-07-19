@@ -250,7 +250,13 @@ void checkUDP()
                   ip[x] = packetBuffer[x + 8];
                 }
 #endif // ifndef BUILD_NO_DEBUG
-                Nodes[unit].age = 0; // Create a new element when not present
+                {
+                  #ifdef USE_SECOND_HEAP
+                  HeapSelectIram ephemeral;
+                  #endif
+
+                  Nodes[unit].age = 0; // Create a new element when not present
+                }
                 NodesMap::iterator it = Nodes.find(unit);
 
                 if (it != Nodes.end()) {
@@ -265,8 +271,14 @@ void checkUDP()
                     char tmpNodeName[26] = { 0 };
                     memcpy(&tmpNodeName[0], reinterpret_cast<uint8_t *>(&packetBuffer[15]), 25);
                     tmpNodeName[25]     = 0;
-                    it->second.nodeName = tmpNodeName;
-                    it->second.nodeName.trim();
+                    {
+                      #ifdef USE_SECOND_HEAP
+                      HeapSelectIram ephemeral;
+                      #endif
+
+                      it->second.nodeName = tmpNodeName;
+                      it->second.nodeName.trim();
+                    }
                     it->second.nodeType          = packetBuffer[40];
                     it->second.webgui_portnumber = 80;
 
@@ -518,7 +530,13 @@ void sendSysInfoUDP(uint8_t repeats)
     }
   }
 
-  Nodes[Settings.Unit].age = 0; // Create new node when not already present.
+  {
+    #ifdef USE_SECOND_HEAP
+    HeapSelectIram ephemeral;
+    #endif
+
+    Nodes[Settings.Unit].age = 0; // Create new node when not already present.
+  }
   // store my own info also in the list
   NodesMap::iterator it = Nodes.find(Settings.Unit);
 

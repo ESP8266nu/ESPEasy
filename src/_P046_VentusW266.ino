@@ -127,8 +127,8 @@ volatile int Plugin_046_strikesph = 0;
 
 
 // TODO TD-er: These call-back functions are quite long and will take a lot of iRAM.
-void Plugin_046_ISR_nSEL() ICACHE_RAM_ATTR;                     // Interrupt routines
-void Plugin_046_ISR_SCLK() ICACHE_RAM_ATTR;
+void Plugin_046_ISR_nSEL() IRAM_ATTR;                     // Interrupt routines
+void Plugin_046_ISR_SCLK() IRAM_ATTR;
 
 boolean Plugin_046(uint8_t function, struct EventStruct *event, String& string)
 {

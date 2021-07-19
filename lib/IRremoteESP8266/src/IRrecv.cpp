@@ -22,13 +22,17 @@ extern "C" {
 #include "IRutils.h"
 
 #ifdef UNIT_TEST
-#undef ICACHE_RAM_ATTR
-#define ICACHE_RAM_ATTR
+#undef IRAM_ATTR
+#define IRAM_ATTR
 #endif
 
 #ifndef USE_IRAM_ATTR
 #if defined(ESP8266)
-#define USE_IRAM_ATTR ICACHE_RAM_ATTR
+  #ifndef CORE_POST_3_0_0
+    #define USE_IRAM_ATTR ICACHE_RAM_ATTR
+  #else
+    #define USE_IRAM_ATTR IRAM_ATTR
+  #endif
 #endif  // ESP8266
 #if defined(ESP32)
 #define USE_IRAM_ATTR IRAM_ATTR

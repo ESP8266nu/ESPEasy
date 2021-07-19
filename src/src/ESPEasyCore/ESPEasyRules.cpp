@@ -1427,6 +1427,11 @@ void createRuleEvents(struct EventStruct *event) {
 
   if (!validDeviceIndex(DeviceIndex)) { return; }
 
+  #ifdef USE_SECOND_HEAP
+  HeapSelectIram ephemeral;  
+  #endif
+
+
   LoadTaskSettings(event->TaskIndex);
 
   const uint8_t valueCount = getValueCountForTask(event->TaskIndex);

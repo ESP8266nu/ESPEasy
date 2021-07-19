@@ -9,6 +9,10 @@ C015_queue_element::C015_queue_element(C015_queue_element&& other)
   , controller_idx(other.controller_idx), valuesSent(other.valuesSent)
   , valueCount(other.valueCount)
 {
+  #ifdef USE_SECOND_HEAP
+  HeapSelectIram ephemeral;
+  #endif
+
   for (uint8_t i = 0; i < VARS_PER_TASK; ++i) {
     txt[i]  = std::move(other.txt[i]);
     vPin[i] = other.vPin[i];

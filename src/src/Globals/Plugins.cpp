@@ -107,7 +107,11 @@ deviceIndex_t getDeviceIndex(pluginID_t pluginID)
    Find name of plugin given the plugin device index..
  \*********************************************************************************************/
 String getPluginNameFromDeviceIndex(deviceIndex_t deviceIndex) {
-  String deviceName = "";
+  #ifdef USE_SECOND_HEAP
+  HeapSelectDram ephemeral;
+  #endif
+
+  String deviceName;
 
   if (validDeviceIndex(deviceIndex)) {
     Plugin_ptr[deviceIndex](PLUGIN_GET_DEVICENAME, nullptr, deviceName);
@@ -125,32 +129,6 @@ String getPluginNameFromPluginID(pluginID_t pluginID) {
     return name;
   }
   return getPluginNameFromDeviceIndex(deviceIndex);
-}
-
-// ********************************************************************************
-// Device Sort routine, compare two array entries
-// ********************************************************************************
-bool arrayLessThan(const String& ptr_1, const String& ptr_2)
-{
-  unsigned int i = 0;
-
-  while (i < ptr_1.length()) // For each character in string 1, starting with the first:
-  {
-    if (ptr_2.length() < i)  // If string 2 is shorter, then switch them
-    {
-      return true;
-    }
-    const char check1 = static_cast<char>(ptr_1[i]); // get the same char from string 1 and string 2
-    const char check2 = static_cast<char>(ptr_2[i]);
-
-    if (check1 == check2) {
-      // they're equal so far; check the next char !!
-      i++;
-    } else {
-      return check2 > check1;
-    }
-  }
-  return false;
 }
 
 // ********************************************************************************
@@ -179,10 +157,9 @@ void sortDeviceIndexArray() {
 
     while (innerLoop  >= 1)
     {
-      if (arrayLessThan(
-            getPluginNameFromDeviceIndex(DeviceIndex_sorted[innerLoop]),
-            getPluginNameFromDeviceIndex(DeviceIndex_sorted[innerLoop - 1])))
-      {
+      const String cur(getPluginNameFromDeviceIndex(DeviceIndex_sorted[innerLoop]));
+      const String prev(getPluginNameFromDeviceIndex(DeviceIndex_sorted[innerLoop - 1]));
+      if (cur < prev) {
         deviceIndex_t temp = DeviceIndex_sorted[innerLoop - 1];
         DeviceIndex_sorted[innerLoop - 1] = DeviceIndex_sorted[innerLoop];
         DeviceIndex_sorted[innerLoop]     = temp;
@@ -256,6 +233,10 @@ void queueTaskEvent(const String& eventName, taskIndex_t taskIndex, int value1) 
  * Call the plugin of 1 task for 1 function, with standard EventStruct and optional command string
  */
 bool PluginCallForTask(taskIndex_t taskIndex, uint8_t Function, EventStruct *TempEvent, String& command, EventStruct *event = nullptr) {
+  #ifdef USE_SECOND_HEAP
+  HeapSelectDram ephemeral;
+  #endif
+
   bool retval = false;
   if (Settings.TaskDeviceEnabled[taskIndex] && validPluginID_fullcheck(Settings.TaskDeviceNumber[taskIndex]))
   {
@@ -310,6 +291,10 @@ bool PluginCallForTask(taskIndex_t taskIndex, uint8_t Function, EventStruct *Tem
 \*********************************************************************************************/
 bool PluginCall(uint8_t Function, struct EventStruct *event, String& str)
 {
+  #ifdef USE_SECOND_HEAP
+  HeapSelectDram ephemeral;
+  #endif
+
   struct EventStruct TempEvent;
 
   if (event == nullptr) {
@@ -332,6 +317,10 @@ bool PluginCall(uint8_t Function, struct EventStruct *event, String& str)
       for (deviceIndex_t x = 0; x < PLUGIN_MAX; x++) {
         if (validPluginID(DeviceIndex_to_Plugin_id[x])) {
           if (Function == PLUGIN_DEVICE_ADD) {
+            #ifdef USE_SECOND_HEAP
+            HeapSelectIram ephemeral;
+            #endif
+
             if ((deviceCount + 2) > static_cast<int>(Device.size())) {
               // Increase with 16 to get some compromise between number of resizes and wasted space
               unsigned int newSize = Device.size();

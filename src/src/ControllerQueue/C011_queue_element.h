@@ -23,7 +23,11 @@ public:
 
   C011_queue_element(C011_queue_element&& other) = default;
 
+#ifdef USE_SECOND_HEAP
+  C011_queue_element(const C011_queue_element& other) = default;
+#else
   C011_queue_element(const C011_queue_element& other) = delete;
+#endif
 
   C011_queue_element(const struct EventStruct *event);
 

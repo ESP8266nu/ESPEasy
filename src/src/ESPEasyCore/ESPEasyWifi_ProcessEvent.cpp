@@ -499,7 +499,10 @@ void processDisableAPmode() {
 }
 
 void processScanDone() {
+  WiFi_AP_Candidates.load_knownCredentials();
   if (WiFiEventData.processedScanDone) { return; }
+
+
 
   // Better act on the scan done event, as it may get triggered for normal wifi begin calls.
   int8_t scanCompleteStatus = WiFi.scanComplete();

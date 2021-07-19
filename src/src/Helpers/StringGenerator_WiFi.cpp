@@ -109,12 +109,14 @@ const __FlashStringHelper * getLastDisconnectReason(WiFiDisconnectReason reason)
 }
 
 String getLastDisconnectReason() {
-  String reason = "(";
+  String reason;
+  reason += '(';
 
   reason += WiFiEventData.lastDisconnectReason;
-  reason += F(") ");
+  reason += ')';
 
   #ifndef LIMIT_BUILD_SIZE
+  reason += ' ';
   reason += getLastDisconnectReason(WiFiEventData.lastDisconnectReason);
   #endif
   return reason;

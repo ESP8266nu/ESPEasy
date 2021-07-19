@@ -65,9 +65,13 @@ private:
 
 #ifndef ISR_PREFIX
   #if defined(ESP8266)
-    #define ISR_PREFIX ICACHE_RAM_ATTR
+	#ifndef CORE_POST_3_0_0
+      #define ISR_PREFIX ICACHE_RAM_ATTR
+	#else
+      #define ISR_PREFIX IRAM_ATTR
+	#endif
   #elif defined(ESP32)
-    // TODO: should this also be ICACHE_RAM_ATTR ??
+    // TODO: should this also be IRAM_ATTR ??
     #define ISR_PREFIX IRAM_ATTR
   #else
     #define ISR_PREFIX

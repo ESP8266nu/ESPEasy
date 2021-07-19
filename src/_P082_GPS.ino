@@ -56,7 +56,7 @@
 
 // Must use volatile declared variable (which will end up in iRAM)
 volatile unsigned long P082_pps_time = 0;
-void    Plugin_082_interrupt() ICACHE_RAM_ATTR;
+void    Plugin_082_interrupt() IRAM_ATTR;
 
 boolean Plugin_082(uint8_t function, struct EventStruct *event, String& string) {
   boolean success = false;

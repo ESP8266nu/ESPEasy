@@ -31,6 +31,8 @@
 #include "../WebServer/JSON.h"
 #include "../WebServer/AccessControl.h"
 
+#include "../../ESPEasy_common.h"
+
 String getInternalLabel(LabelType::Enum label, char replaceSpace) {
   return to_internal_string(getLabel(label), replaceSpace);
 }
@@ -57,6 +59,10 @@ const __FlashStringHelper * getLabel(LabelType::Enum label) {
 
     case LabelType::FREE_MEM:               return F("Free RAM");
     case LabelType::FREE_STACK:             return F("Free Stack");
+#ifdef USE_SECOND_HEAP
+    case LabelType::FREE_HEAP_IRAM:         return F("Free 2nd Heap");
+#endif
+
 #if defined(CORE_POST_2_5_0) || defined(ESP32)
     case LabelType::HEAP_MAX_FREE_BLOCK:    return F("Heap Max Free Block");
 #endif // if defined(CORE_POST_2_5_0) || defined(ESP32)
@@ -222,8 +228,13 @@ String getValue(LabelType::Enum label) {
     case LabelType::WIFI_PERIODICAL_SCAN:   return jsonBool(Settings.PeriodicalScanWiFi());
     case LabelType::WIFI_USE_LAST_CONN_FROM_RTC: return jsonBool(Settings.UseLastWiFiFromRTC());
 
-    case LabelType::FREE_MEM:               return String(ESP.getFreeHeap());
+    case LabelType::FREE_MEM:               return String(FreeMem());
     case LabelType::FREE_STACK:             return String(getCurrentFreeStack());
+
+#ifdef USE_SECOND_HEAP
+    case LabelType::FREE_HEAP_IRAM:         return String(FreeMem2ndHeap());
+#endif
+
 #if defined(CORE_POST_2_5_0)
     case LabelType::HEAP_MAX_FREE_BLOCK:    return String(ESP.getMaxFreeBlockSize());
 #endif // if defined(CORE_POST_2_5_0)

@@ -31,6 +31,9 @@ struct LabelType {
 
     FREE_MEM,            // 9876
     FREE_STACK,          // 3456
+#ifdef USE_SECOND_HEAP
+    FREE_HEAP_IRAM,
+#endif
 #if defined(CORE_POST_2_5_0) || defined(ESP32)
     HEAP_MAX_FREE_BLOCK, // 7654
 #endif // if defined(CORE_POST_2_5_0) || defined(ESP32)

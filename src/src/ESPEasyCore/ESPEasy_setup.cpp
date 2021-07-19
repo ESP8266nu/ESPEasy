@@ -93,6 +93,9 @@ void ESPEasy_setup()
 #ifdef PHASE_LOCKED_WAVEFORM
   enablePhaseLockedWaveform();
 #endif // ifdef PHASE_LOCKED_WAVEFORM
+#ifdef USE_SECOND_HEAP
+  HeapSelectDram ephemeral;
+#endif
   initWiFi();
 
   run_compiletime_checks();

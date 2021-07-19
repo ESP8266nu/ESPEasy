@@ -21,14 +21,24 @@ void LogStruct::add(const uint8_t loglevel, const char *line) {
   if (linelength > LOG_STRUCT_MESSAGE_SIZE - 1) {
     linelength = LOG_STRUCT_MESSAGE_SIZE - 1;
   }
-  Message[write_idx] = "";
-  if (!Message[write_idx].reserve(linelength)) {
-    return;
-  }
+  {
+    // Must copy using pgm_read_byte as some log entries may be served directly from flash
+    // Copy to a String in DRAM for speed, then either move (in DRAM) or copy to 2nd heap
+    String tmp;
+    tmp.reserve(linelength);
+    const char* c = line;
+    for (unsigned i = 0; i < linelength; ++i) {
+      tmp += static_cast<char>(pgm_read_byte(c++));
+    }
 
-  const char* c = line;
-  for (unsigned i = 0; i < linelength; ++i) {
-    Message[write_idx] += static_cast<char>(pgm_read_byte(c++));
+    #ifdef USE_SECOND_HEAP
+    {
+      HeapSelectIram ephemeral;
+      Message[write_idx] = tmp;
+    }
+    #else
+      Message[write_idx] = std::move(tmp);
+    #endif
   }
 }
 
@@ -38,6 +48,11 @@ bool LogStruct::get(String& output, const String& lineEnd) {
   lastReadTimeStamp = millis();
 
   if (!isEmpty()) {
+    #ifdef USE_SECOND_HEAP
+    // Fetch the log line and make sure it is allocated on the DRAM heap, not the 2nd heap
+    // Otherwise checks like strnlen_P may crash on it.
+    HeapSelectDram ephemeral;
+    #endif
     read_idx = (read_idx + 1) % LOG_STRUCT_MESSAGE_LINES;
     output  += formatLine(read_idx, lineEnd);
   }

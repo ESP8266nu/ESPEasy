@@ -17,7 +17,13 @@ class queue_element_formatted_uservar {
 public:
 
   queue_element_formatted_uservar() = default;
+
+#ifdef USE_SECOND_HEAP
+  queue_element_formatted_uservar(const queue_element_formatted_uservar& other) = default;
+#else
   queue_element_formatted_uservar(const queue_element_formatted_uservar& other) = delete;
+#endif
+
   queue_element_formatted_uservar(queue_element_formatted_uservar&& other);
 
   queue_element_formatted_uservar(struct EventStruct *event);

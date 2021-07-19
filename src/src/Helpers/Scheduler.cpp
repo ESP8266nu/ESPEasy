@@ -591,6 +591,10 @@ void ESPEasy_Scheduler::setPluginTaskTimer(unsigned long msecFromNow, taskIndex_
 }
 
 void ESPEasy_Scheduler::process_plugin_task_timer(unsigned long id) {
+  #ifdef USE_SECOND_HEAP
+  HeapSelectDram ephemeral;
+  #endif
+
   START_TIMER;
 
   const unsigned long mixedTimerId = getMixedId(PLUGIN_TASK_TIMER, id);
@@ -790,6 +794,10 @@ void ESPEasy_Scheduler::setPluginTimer(unsigned long msecFromNow, pluginID_t plu
 }
 
 void ESPEasy_Scheduler::process_plugin_timer(unsigned long id) {
+  #ifdef USE_SECOND_HEAP
+  HeapSelectDram ephemeral;
+  #endif
+
   START_TIMER;
   const unsigned long mixedTimerId = getMixedId(PLUGIN_TIMER, id);
   auto it                          = systemTimers.find(mixedTimerId);
@@ -1089,6 +1097,10 @@ void ESPEasy_Scheduler::schedule_event_timer(PluginPtrType ptr_type, uint8_t Ind
 }
 
 void ESPEasy_Scheduler::process_system_event_queue() {
+  #ifdef USE_SECOND_HEAP
+  HeapSelectDram ephemeral;
+  #endif
+
   if (ScheduledEventQueue.size() == 0) { return; }
   unsigned long id       = ScheduledEventQueue.front().id;
   uint8_t Function          = id & 0xFF;

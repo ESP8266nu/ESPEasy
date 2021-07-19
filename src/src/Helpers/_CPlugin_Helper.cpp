@@ -91,11 +91,11 @@ bool safeReadStringUntil(Stream     & input,
 }
 
 String get_auth_header(const String& user, const String& pass) {
-  String authHeader = "";
+  String authHeader;
 
   if ((!user.isEmpty()) && (!pass.isEmpty())) {
     String auth = user;
-    auth       += ":";
+    auth       += ':';
     auth       += pass;
     authHeader  = F("Authorization: Basic ");
     authHeader += base64::encode(auth);
@@ -105,7 +105,7 @@ String get_auth_header(const String& user, const String& pass) {
 }
 
 String get_auth_header(int controller_index, const ControllerSettingsStruct& ControllerSettings) {
-  String authHeader = "";
+  String authHeader;
 
   if (validControllerIndex(controller_index)) {
     if (hasControllerCredentialsSet(controller_index, ControllerSettings))

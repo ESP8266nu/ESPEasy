@@ -569,7 +569,15 @@ bool CPlugin_018(CPlugin::Function function, struct EventStruct *event, String& 
 
       {
         // Keep this object in a small scope so we can destruct it as soon as possible again.
-        std::shared_ptr<C018_ConfigStruct> customConfig(new C018_ConfigStruct);
+        std::shared_ptr<C018_ConfigStruct> customConfig;
+        {
+          // Try to allocate on 2nd heap
+          #ifdef USE_SECOND_HEAP
+//          HeapSelectIram ephemeral;
+          #endif
+          std::shared_ptr<C018_ConfigStruct> tmp_shared(new (std::nothrow) C018_ConfigStruct);
+          customConfig = std::move(tmp_shared);
+        }
 
         if (!customConfig) {
           break;
@@ -706,7 +714,15 @@ bool CPlugin_018(CPlugin::Function function, struct EventStruct *event, String& 
     }
     case CPlugin::Function::CPLUGIN_WEBFORM_SAVE:
     {
-      std::shared_ptr<C018_ConfigStruct> customConfig(new C018_ConfigStruct);
+      std::shared_ptr<C018_ConfigStruct> customConfig;
+      {
+        // Try to allocate on 2nd heap
+        #ifdef USE_SECOND_HEAP
+//        HeapSelectIram ephemeral;
+        #endif
+        std::shared_ptr<C018_ConfigStruct> tmp_shared(new (std::nothrow) C018_ConfigStruct);
+        customConfig = std::move(tmp_shared);
+      }
 
       if (customConfig) {
         customConfig->reset();
@@ -849,7 +865,15 @@ bool C018_init(struct EventStruct *event) {
     Port               = ControllerSettings.Port;
   }
 
-  std::shared_ptr<C018_ConfigStruct> customConfig(new C018_ConfigStruct);
+  std::shared_ptr<C018_ConfigStruct> customConfig;
+  {
+    // Try to allocate on 2nd heap
+    #ifdef USE_SECOND_HEAP
+//    HeapSelectIram ephemeral;
+    #endif
+    std::shared_ptr<C018_ConfigStruct> tmp_shared(new (std::nothrow) C018_ConfigStruct);
+    customConfig = std::move(tmp_shared);
+  }
 
   if (!customConfig) {
     return false;

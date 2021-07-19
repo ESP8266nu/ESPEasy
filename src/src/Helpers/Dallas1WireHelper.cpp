@@ -7,6 +7,7 @@
 
 #include "../WebServer/JSON.h"
 
+#include "../../ESPEasy_common.h"
 
 #if defined(ESP32)
   # define ESP32noInterrupts() { portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED; portENTER_CRITICAL(&mux)
@@ -896,7 +897,7 @@ uint8_t Dallas_read_bit(int8_t gpio_pin_rx, int8_t gpio_pin_tx)
   return r;
 }
 
-uint8_t Dallas_read_bit_ISR(int8_t gpio_pin_rx, int8_t gpio_pin_tx, unsigned long start)
+uint8_t IRAM_ATTR Dallas_read_bit_ISR(int8_t gpio_pin_rx, int8_t gpio_pin_tx, unsigned long start)
 {
   uint8_t r;
   {
@@ -952,7 +953,7 @@ void Dallas_write_bit(uint8_t v, int8_t gpio_pin_rx, int8_t gpio_pin_tx)
   }
 }
 
-void Dallas_write_bit_ISR(uint8_t v,
+void IRAM_ATTR Dallas_write_bit_ISR(uint8_t v,
                       int8_t  gpio_pin_rx,
                       int8_t  gpio_pin_tx,
                       long low_time,

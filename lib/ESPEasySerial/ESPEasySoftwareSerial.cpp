@@ -27,6 +27,11 @@ extern "C" {
 #include "gpio.h"
 }
 
+
+  #ifndef CORE_POST_3_0_0
+    #define IRAM_ATTR ICACHE_RAM_ATTR
+  #endif
+
 #include <ESPEasySoftwareSerial.h>
 
 #define MAX_PIN 16
@@ -38,17 +43,17 @@ extern "C" {
 static ESPeasySoftwareSerial *ObjList[NR_CONCURRENT_SOFT_SERIALS];
 static uint8_t PinControllerMap[NR_CONCURRENT_SOFT_SERIALS]={}; // Zero all elements
 
-void ICACHE_RAM_ATTR espeasy_sws_isr_0() { ObjList[0]->rxRead(); };
-void ICACHE_RAM_ATTR espeasy_sws_isr_1() { ObjList[1]->rxRead(); };
-void ICACHE_RAM_ATTR espeasy_sws_isr_2() { ObjList[2]->rxRead(); };
-/*void ICACHE_RAM_ATTR espeasy_sws_isr_3() { ObjList[3]->rxRead(); };
-void ICACHE_RAM_ATTR espeasy_sws_isr_4() { ObjList[4]->rxRead(); };
-void ICACHE_RAM_ATTR espeasy_sws_isr_5() { ObjList[5]->rxRead(); };
+void IRAM_ATTR espeasy_sws_isr_0() { ObjList[0]->rxRead(); };
+void IRAM_ATTR espeasy_sws_isr_1() { ObjList[1]->rxRead(); };
+void IRAM_ATTR espeasy_sws_isr_2() { ObjList[2]->rxRead(); };
+/*void IRAM_ATTR espeasy_sws_isr_3() { ObjList[3]->rxRead(); };
+void IRAM_ATTR espeasy_sws_isr_4() { ObjList[4]->rxRead(); };
+void IRAM_ATTR espeasy_sws_isr_5() { ObjList[5]->rxRead(); };
    // Pin 6 to 11 can not be used
-   void ICACHE_RAM_ATTR espeasy_sws_isr_12() { ObjList[6]->rxRead(); };
-   void ICACHE_RAM_ATTR espeasy_sws_isr_13() { ObjList[7]->rxRead(); };
-   void ICACHE_RAM_ATTR espeasy_sws_isr_14() { ObjList[8]->rxRead(); };
-   void ICACHE_RAM_ATTR espeasy_sws_isr_15() { ObjList[9]->rxRead(); };
+   void IRAM_ATTR espeasy_sws_isr_12() { ObjList[6]->rxRead(); };
+   void IRAM_ATTR espeasy_sws_isr_13() { ObjList[7]->rxRead(); };
+   void IRAM_ATTR espeasy_sws_isr_14() { ObjList[8]->rxRead(); };
+   void IRAM_ATTR espeasy_sws_isr_15() { ObjList[9]->rxRead(); };
  */
 
 static void (*ISRList[NR_CONCURRENT_SOFT_SERIALS])() = {
@@ -240,7 +245,7 @@ int ESPeasySoftwareSerial::peek() {
   return m_buffer[m_outPos];
 }
 
-void ICACHE_RAM_ATTR ESPeasySoftwareSerial::rxRead() {
+void IRAM_ATTR ESPeasySoftwareSerial::rxRead() {
   // Advance the starting point for the samples but compensate for the
   // initial delay which occurs before the interrupt is delivered
   unsigned long wait  = m_bitTime + m_bitTime / 3 - 500;

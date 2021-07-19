@@ -22,7 +22,11 @@ public:
   queue_element_single_value_base(const struct EventStruct *event,
                                   uint8_t                      value_count);
 
+#ifdef USE_SECOND_HEAP
+  queue_element_single_value_base(const queue_element_single_value_base& rval) = default;
+#else
   queue_element_single_value_base(const queue_element_single_value_base& rval) = delete;
+#endif
   
   queue_element_single_value_base(queue_element_single_value_base&& rval);
 

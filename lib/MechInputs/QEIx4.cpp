@@ -27,6 +27,13 @@
 #include <limits.h>
 
 
+#ifndef CORE_POST_3_0_0
+  #ifdef ESP8266
+    #define IRAM_ATTR ICACHE_RAM_ATTR
+  #endif
+#endif
+
+
 // bit masks for state machine - don't change!!!
 #define QEIx4_STATE   0xC
 #define QEIx4_MASK    0x1C
@@ -190,7 +197,7 @@ void QEIx4::loop()
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void ICACHE_RAM_ATTR QEIx4::processStateMachine()
+void IRAM_ATTR QEIx4::processStateMachine()
 {
 	DEB(".");
 
@@ -227,7 +234,7 @@ void ICACHE_RAM_ATTR QEIx4::processStateMachine()
 	}
 }
 
-void ICACHE_RAM_ATTR QEIx4::ISR()
+void IRAM_ATTR QEIx4::ISR()
 {
 	for (uint8_t i=0; i<4; i++)
 		if (__instance[i])

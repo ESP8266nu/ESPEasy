@@ -65,8 +65,8 @@ unsigned int p076_hpowfact = 0;
 // Keep values as they are stored and increase this when adding new ones.
 #define MAX_P076_DEVICE   11
 
-void ICACHE_RAM_ATTR p076_hlw8012_cf1_interrupt();
-void ICACHE_RAM_ATTR p076_hlw8012_cf_interrupt();
+void IRAM_ATTR p076_hlw8012_cf1_interrupt();
+void IRAM_ATTR p076_hlw8012_cf_interrupt();
 
 
 bool p076_getDeviceString(int device, String& name) {
@@ -552,13 +552,13 @@ void Plugin076_Reset(taskIndex_t TaskIndex) {
 
 // When using interrupts we have to call the library entry point
 // whenever an interrupt is triggered
-void ICACHE_RAM_ATTR p076_hlw8012_cf1_interrupt() {
+void IRAM_ATTR p076_hlw8012_cf1_interrupt() {
   if (Plugin_076_hlw) {
     Plugin_076_hlw->cf1_interrupt();
   }
 }
 
-void ICACHE_RAM_ATTR p076_hlw8012_cf_interrupt() {
+void IRAM_ATTR p076_hlw8012_cf_interrupt() {
   if (Plugin_076_hlw) {
     Plugin_076_hlw->cf_interrupt();
   }

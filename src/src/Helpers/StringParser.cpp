@@ -539,7 +539,13 @@ void transformValue(
 taskIndex_t findTaskIndexByName(const String& deviceName)
 {
   // cache this, since LoadTaskSettings does take some time.
+  #ifdef USE_SECOND_HEAP
+  HeapSelectDram ephemeral;
+  auto result = Cache.taskIndexName.find(String(deviceName));
+  #else
   auto result = Cache.taskIndexName.find(deviceName);
+  #endif
+
 
   if (result != Cache.taskIndexName.end()) {
     return result->second;
@@ -555,7 +561,11 @@ taskIndex_t findTaskIndexByName(const String& deviceName)
         // Use entered taskDeviceName can have any case, so compare case insensitive.
         if (deviceName.equalsIgnoreCase(taskDeviceName))
         {
+          #ifdef USE_SECOND_HEAP
+          Cache.taskIndexName[String(deviceName)] = taskIndex;
+          #else
           Cache.taskIndexName[deviceName] = taskIndex;
+          #endif
           return taskIndex;
         }
       }
@@ -571,6 +581,11 @@ uint8_t findDeviceValueIndexByName(const String& valueName, taskIndex_t taskInde
   const deviceIndex_t deviceIndex = getDeviceIndex_from_TaskIndex(taskIndex);
 
   if (!validDeviceIndex(deviceIndex)) { return VARS_PER_TASK; }
+
+  #ifdef USE_SECOND_HEAP
+  HeapSelectDram ephemeral;
+  #endif
+
 
   // cache this, since LoadTaskSettings does take some time.
   // We need to use a cache search key including the taskIndex,

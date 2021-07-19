@@ -102,8 +102,12 @@ void Adafruit_NeoPixel::updateType(neoPixelType t) {
 }
 
 #ifdef ESP8266
-// ESP8266 show() is external to enforce ICACHE_RAM_ATTR execution
-extern "C" void ICACHE_RAM_ATTR espShow(
+  #ifndef CORE_POST_3_0_0
+    #define IRAM_ATTR ICACHE_RAM_ATTR
+  #endif
+
+// ESP8266 show() is external to enforce IRAM_ATTR execution
+extern "C" void IRAM_ATTR espShow(
   uint8_t pin, uint8_t *pixels, uint32_t numBytes, uint8_t type);
 #endif // ESP8266
 
@@ -1416,7 +1420,7 @@ void Adafruit_NeoPixel::show(void) {
 
 // ESP8266 ----------------------------------------------------------------
 
-  // ESP8266 show() is external to enforce ICACHE_RAM_ATTR execution
+  // ESP8266 show() is external to enforce IRAM_ATTR execution
   espShow(pin, pixels, numBytes, is800KHz);
 
 #elif defined(__ARDUINO_ARC__)

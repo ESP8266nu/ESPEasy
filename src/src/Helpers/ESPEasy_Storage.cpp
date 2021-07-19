@@ -116,6 +116,10 @@ String appendToFile(const String& fname, const uint8_t *data, unsigned int size)
 }
 
 bool fileExists(const String& fname) {
+  #ifdef USE_SECOND_HEAP
+  HeapSelectDram ephemeral;
+  #endif
+
   const String patched_fname = patch_fname(fname);
   auto search = Cache.fileExistsMap.find(patched_fname);
   if (search != Cache.fileExistsMap.end()) {
@@ -619,6 +623,10 @@ String LoadStringArray(SettingsType::Enum settingsType, int index, String string
   tmpString.reserve(bufferSize);
 
   {
+    #ifdef USE_SECOND_HEAP
+    HeapSelectIram ephemeral;
+    #endif
+
     while (stringCount < nrStrings && static_cast<int>(readPos) < max_size) {
       const uint32_t readSize = std::min(bufferSize, max_size - readPos);
       result += LoadFromFile(settingsType,

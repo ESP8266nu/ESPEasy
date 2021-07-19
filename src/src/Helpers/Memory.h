@@ -3,6 +3,8 @@
 
 #include <Arduino.h>
 
+#include "../../ESPEasy_common.h"
+
 /*********************************************************************************************\
    Memory management
 \*********************************************************************************************/
@@ -42,7 +44,11 @@ bool     allocatedOnStack(const void *address);
 /********************************************************************************************\
    Get free system mem
  \*********************************************************************************************/
-unsigned long FreeMem(void);
+unsigned long FreeMem();
+
+#ifdef USE_SECOND_HEAP
+unsigned long FreeMem2ndHeap();
+#endif
 
 unsigned long getMaxFreeBlock();
 

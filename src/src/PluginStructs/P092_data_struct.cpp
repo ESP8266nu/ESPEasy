@@ -74,7 +74,7 @@ void DLBus::StartReceiving(void)
   interrupts(); // interrupts allowed now, next instruction WILL be executed
 }
 
-void ICACHE_RAM_ATTR DLBus::ISR(void)
+void IRAM_ATTR DLBus::ISR(void)
 {
   if (__instance)
   {
@@ -82,7 +82,7 @@ void ICACHE_RAM_ATTR DLBus::ISR(void)
   }
 }
 
-void ICACHE_RAM_ATTR DLBus::ISR_PinChanged(void)
+void IRAM_ATTR DLBus::ISR_PinChanged(void)
 {
 //  long TimeDiff = usecPassedSince(ISR_TimeLastBitChange); // time difference to previous pulse in Âµs
   uint32_t _now = micros();

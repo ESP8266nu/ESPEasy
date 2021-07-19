@@ -6,6 +6,7 @@
 #include "../DataTypes/TaskIndex.h"
 #include "../DataTypes/PluginID.h"
 
+
 // Used timings based on Maxim documentation.
 // See https://www.maximintegrated.com/en/design/technical-documents/app-notes/1/126.html
 // We use the "standard speed" timings, not the "Overdrive speed"
@@ -168,7 +169,7 @@ void    Dallas_write(uint8_t ByteToWrite,
 *  See https://github.com/espressif/arduino-esp32/issues/1335
 \*********************************************************************************************/
 uint8_t Dallas_read_bit(int8_t gpio_pin_rx, int8_t gpio_pin_tx);
-uint8_t Dallas_read_bit_ISR(int8_t gpio_pin_rx, int8_t gpio_pin_tx, unsigned long start) ICACHE_RAM_ATTR;
+uint8_t Dallas_read_bit_ISR(int8_t gpio_pin_rx, int8_t gpio_pin_tx, unsigned long start);
 
 /*********************************************************************************************\
 *  Dallas Write bit
@@ -183,7 +184,7 @@ void Dallas_write_bit_ISR(uint8_t v,
                       int8_t  gpio_pin_tx,
                       long low_time,
                       long high_time,
-                      unsigned long &start) ICACHE_RAM_ATTR;
+                      unsigned long &start);
 
 /*********************************************************************************************\
 *  Standard function to initiate addressing a sensor.

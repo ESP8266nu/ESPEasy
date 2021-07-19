@@ -55,6 +55,9 @@ void updateLoopStats() {
 \*********************************************************************************************/
 void ESPEasy_loop()
 {
+  #ifdef USE_SECOND_HEAP
+  HeapSelectDram ephemeral;
+  #endif
   /*
      //FIXME TD-er: No idea what this does.
      if(MainLoopCall_ptr)

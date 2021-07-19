@@ -14,7 +14,11 @@ public:
 
   MQTT_queue_element() = default;
 
+#ifdef USE_SECOND_HEAP
+  MQTT_queue_element(const MQTT_queue_element& other) = default;
+#else
   MQTT_queue_element(const MQTT_queue_element& other) = delete;
+#endif
   
   MQTT_queue_element(MQTT_queue_element&& other) = default;
 

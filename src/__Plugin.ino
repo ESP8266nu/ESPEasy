@@ -20,6 +20,10 @@
 
 void PluginInit(void)
 {
+  #ifdef USE_SECOND_HEAP
+  HeapSelectDram ephemeral;
+  #endif
+
   DeviceIndex_to_Plugin_id[PLUGIN_MAX] = INVALID_PLUGIN_ID;
   // Clear pointer table for all plugins
   for (deviceIndex_t x = 0; x < PLUGIN_MAX; x++)

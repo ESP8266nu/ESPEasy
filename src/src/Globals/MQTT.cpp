@@ -1,6 +1,9 @@
 #include "../Globals/MQTT.h"
 
+#include "../../ESPEasy_common.h"
+
 #ifdef USES_MQTT
+
 
 // MQTT client
 WiFiClient   mqtt;

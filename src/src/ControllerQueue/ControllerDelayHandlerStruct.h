@@ -11,6 +11,7 @@
 #include "../Helpers/_CPlugin_Helper.h"
 #include "../Helpers/ESPEasy_Storage.h"
 #include "../Helpers/ESPEasy_time_calc.h"
+#include "../Helpers/Memory.h"
 #include "../Helpers/Networking.h"
 #include "../Helpers/Scheduler.h"
 #include "../Helpers/StringConverter.h"
@@ -82,9 +83,18 @@ struct ControllerDelayHandlerStruct {
     if (sendQueue.size() >= max_queue_depth) { return true; }
 
     // Number of elements is not exceeding the limit, check memory
-    int freeHeap = ESP.getFreeHeap();
+    int freeHeap = FreeMem();
+    {
+      #ifdef USE_SECOND_HEAP
+      const int freeHeap2 = FreeMem2ndHeap();
+      if (freeHeap2 < freeHeap) {
+        freeHeap = freeHeap2;
+      }
+      #endif
+    }
 
-    if (freeHeap > 5000) { return false; // Memory is not an issue.
+    if (freeHeap > 5000) { 
+      return false; // Memory is not an issue.
     }
 #ifndef BUILD_NO_DEBUG
 
@@ -153,7 +163,13 @@ struct ControllerDelayHandlerStruct {
     }
 
     if (!queueFull(element)) {
+      #ifdef USE_SECOND_HEAP
+      HeapSelectIram ephemeral;
+      sendQueue.push_back(element);
+      #else
       sendQueue.push_back(std::move(element));
+      #endif
+
       return true;
     }
 #ifndef BUILD_NO_DEBUG

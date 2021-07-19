@@ -356,6 +356,12 @@ void handle_sysinfo_memory() {
   addRowLabelValue(LabelType::HEAP_FRAGMENTATION);
   addHtml('%');
 # endif // ifdef CORE_POST_2_5_0
+  {
+    #ifdef USE_SECOND_HEAP
+    addRowLabelValue(LabelType::FREE_HEAP_IRAM);
+    #endif
+  }
+
 
 
   addRowLabel(LabelType::FREE_STACK);

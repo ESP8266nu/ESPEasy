@@ -23,6 +23,10 @@ bool (*CPlugin_ptr[CPLUGIN_MAX])(CPlugin::Function,
    Call CPlugin functions
  \*********************************************************************************************/
 bool CPluginCall(CPlugin::Function Function, struct EventStruct *event) {
+  #ifdef USE_SECOND_HEAP
+  HeapSelectDram ephemeral;
+  #endif
+
   String dummy;
 
   return CPluginCall(Function, event, dummy);
@@ -30,6 +34,10 @@ bool CPluginCall(CPlugin::Function Function, struct EventStruct *event) {
 
 bool CPluginCall(CPlugin::Function Function, struct EventStruct *event, String& str)
 {
+  #ifdef USE_SECOND_HEAP
+  HeapSelectDram ephemeral;
+  #endif
+
   struct EventStruct TempEvent;
 
   if (event == 0) {
@@ -144,6 +152,9 @@ bool CPluginCall(CPlugin::Function Function, struct EventStruct *event, String& 
 }
 
 bool CPluginCall(protocolIndex_t protocolIndex, CPlugin::Function Function, struct EventStruct *event, String& str) {
+  #ifdef USE_SECOND_HEAP
+  HeapSelectDram ephemeral;
+  #endif
   if (validProtocolIndex(protocolIndex)) {
     #ifndef BUILD_NO_DEBUG
     const int freemem_begin = ESP.getFreeHeap();

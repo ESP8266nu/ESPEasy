@@ -7,6 +7,8 @@
 #include "../Helpers/ESPEasy_time_calc.h"
 #include "../WebServer/Markup_Forms.h"
 
+#include "../../ESPEasy_common.h"
+
 #include <Arduino.h>
 
 #define GPIO_PLUGIN_ID  1
@@ -359,7 +361,7 @@ void Internal_GPIO_pulseHelper::processStablePulse(int pinState, uint64_t pulseC
   ISRdata.processingFlags = false;
 }
 
-void ICACHE_RAM_ATTR Internal_GPIO_pulseHelper::ISR_pulseCheck(Internal_GPIO_pulseHelper *self)
+void IRAM_ATTR Internal_GPIO_pulseHelper::ISR_pulseCheck(Internal_GPIO_pulseHelper *self)
 {
   noInterrupts(); // s0170071: avoid nested interrups due to bouncing.
 

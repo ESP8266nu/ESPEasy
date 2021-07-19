@@ -80,12 +80,12 @@ void html_TR_TD_height(int height) {
 }
 
 void html_TD() {
-  html_TD(1);
+  addHtml(F("<TD>"));
 }
 
 void html_TD(int td_cnt) {
   for (int i = 0; i < td_cnt; ++i) {
-    addHtml(F("<TD>"));
+    html_TD();
   }
 }
 

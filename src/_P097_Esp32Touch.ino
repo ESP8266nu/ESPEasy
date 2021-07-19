@@ -206,16 +206,16 @@ void P097_setEventParams(int pin, uint16_t threshold) {
   }
 }
 
-void P097_got_T0() ICACHE_RAM_ATTR;
-void P097_got_T1() ICACHE_RAM_ATTR;
-void P097_got_T2() ICACHE_RAM_ATTR;
-void P097_got_T3() ICACHE_RAM_ATTR;
-void P097_got_T4() ICACHE_RAM_ATTR;
-void P097_got_T5() ICACHE_RAM_ATTR;
-void P097_got_T6() ICACHE_RAM_ATTR;
-void P097_got_T7() ICACHE_RAM_ATTR;
-void P097_got_T8() ICACHE_RAM_ATTR;
-void P097_got_T9() ICACHE_RAM_ATTR;
+void P097_got_T0() IRAM_ATTR;
+void P097_got_T1() IRAM_ATTR;
+void P097_got_T2() IRAM_ATTR;
+void P097_got_T3() IRAM_ATTR;
+void P097_got_T4() IRAM_ATTR;
+void P097_got_T5() IRAM_ATTR;
+void P097_got_T6() IRAM_ATTR;
+void P097_got_T7() IRAM_ATTR;
+void P097_got_T8() IRAM_ATTR;
+void P097_got_T9() IRAM_ATTR;
 
 void P097_got_T0() {
   bitSet(p097_pinTouched, 0);

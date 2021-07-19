@@ -24,6 +24,9 @@
 
 void CPluginInit(void)
 {
+  #ifdef USE_SECOND_HEAP
+  HeapSelectDram ephemeral;
+  #endif
   ProtocolIndex_to_CPlugin_id[CPLUGIN_MAX] = INVALID_C_PLUGIN_ID;
   uint8_t x;
 

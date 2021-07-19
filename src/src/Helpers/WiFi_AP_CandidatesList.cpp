@@ -77,10 +77,7 @@ void WiFi_AP_CandidatesList::begin_sync_scan() {
 void WiFi_AP_CandidatesList::purge_expired() {
   for (auto it = scanned.begin(); it != scanned.end(); ) {
     if (it->expired()) {
-      if (scanned_mutex.try_lock()) {
-        it = scanned.erase(it);
-        scanned_mutex.unlock();
-      }
+      it = scanned.erase(it);
     } else {
       ++it;
     }
@@ -92,38 +89,7 @@ void WiFi_AP_CandidatesList::process_WiFiscan(uint8_t scancount) {
   for (uint8_t i = 0; i < scancount; ++i) {
     const WiFi_AP_Candidate tmp(i);
 
-    // Remove previous scan result if present
-    for (auto it = scanned.begin(); it != scanned.end();) {
-      if ((tmp == *it) || it->expired()) {
-        if (scanned_mutex.try_lock()) {
-          it = scanned.erase(it);
-          scanned_mutex.unlock();
-        }
-      } else {
-        ++it;
-      }
-    }
-    uint8_t retry = 3;
-
-    while (retry > 0) {
-      --retry;
-
-      if (scanned_mutex.try_lock()) {
-        scanned.push_back(tmp);
-        scanned_mutex.unlock();
-        retry = 0;
-
-        #ifndef BUILD_NO_DEBUG
-
-        if (loglevelActiveFor(LOG_LEVEL_DEBUG)) {
-          String log = F("WiFi : Scan result: ");
-          log += tmp.toString();
-          addLog(LOG_LEVEL_DEBUG, log);
-        }
-        #endif // ifndef BUILD_NO_DEBUG
-      }
-      delay(0);
-    }
+    scanned_new.push_back(tmp);
   }
 
   after_process_WiFiscan();
@@ -132,29 +98,13 @@ void WiFi_AP_CandidatesList::process_WiFiscan(uint8_t scancount) {
 #ifdef ESP8266
 void WiFi_AP_CandidatesList::process_WiFiscan(const bss_info& ap) {
   WiFi_AP_Candidate tmp(ap);
-  {
-    uint8_t retry = 3;
-    while (retry > 0) {
-      --retry;
-      if (scanned_mutex.try_lock()) {
-        scanned.push_back(tmp);
-        scanned_mutex.unlock();
-        retry = 0;
-      }
-      delay(0);
-    }
-  }
+  scanned_new.push_back(tmp);
 }
 #endif
 
 void WiFi_AP_CandidatesList::after_process_WiFiscan() {
-  {
-    if (scanned_mutex.try_lock()) {
-      scanned.sort();
-      scanned_mutex.unlock();
-    }
-  }
-  loadCandidatesFromScanned();
+  scanned_new.sort();
+  _mustLoadCredentials = true;
   WiFi.scanDelete();
 }
 
@@ -262,6 +212,28 @@ bool WiFi_AP_CandidatesList::SettingsIndexMatchCustomCredentials(uint8_t index)
 }
 
 void WiFi_AP_CandidatesList::loadCandidatesFromScanned() {
+  if (scanned_new.size() > 0) {
+    // We have new scans to process.
+    #ifdef USE_SECOND_HEAP
+    HeapSelectIram ephemeral;
+    #endif
+    purge_expired();
+    for (auto scan = scanned_new.begin(); scan != scanned_new.end();) {
+      #ifndef BUILD_NO_DEBUG
+      if (loglevelActiveFor(LOG_LEVEL_DEBUG)) {
+        String log = F("WiFi : Scan result: ");
+        log += scan->toString();
+        addLog(LOG_LEVEL_DEBUG, log);
+      }
+      #endif // ifndef BUILD_NO_DEBUG
+
+      // We copy instead of move, to make sure it is stored on the 2nd heap.
+      scanned.push_back(*scan);
+      scan = scanned_new.erase(scan);
+    }
+    scanned.sort();
+  }
+
   if (candidates.size() > 1) {
     // Do not mess with the current candidates order if > 1 present
     return;
@@ -280,10 +252,7 @@ void WiFi_AP_CandidatesList::loadCandidatesFromScanned() {
 
   for (auto scan = scanned.begin(); scan != scanned.end();) {
     if (scan->expired()) {
-      if (scanned_mutex.try_lock()) {
-        scan = scanned.erase(scan);
-        scanned_mutex.unlock();
-      }
+      scan = scanned.erase(scan);
     } else {
       if (scan->isHidden) {
         if (Settings.IncludeHiddenSSID()) {

@@ -28,3 +28,7 @@ float loop_usec_duration_total  = 0.0f;
 
 unsigned long dailyResetCounter                   = 0;
 volatile unsigned long sw_watchdog_callback_count = 0;
+
+
+I2C_bus_state I2C_state = I2C_bus_state::OK;
+unsigned long I2C_bus_cleared_count = 0;

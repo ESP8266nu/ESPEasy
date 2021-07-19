@@ -107,6 +107,9 @@ struct LabelType {
     GIT_HEAD,
 
 
+    I2C_BUS_STATE,
+    I2C_BUS_CLEARED_COUNT,
+
     SYSLOG_LOG_LEVEL,
     SERIAL_LOG_LEVEL,
     WEB_LOG_LEVEL,

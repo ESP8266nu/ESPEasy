@@ -5,6 +5,8 @@
 
 #include "../../ESPEasy_common.h"
 
+#include "../DataStructs/I2CTypes.h"
+
 class String;
 
 
@@ -38,6 +40,10 @@ extern float loop_usec_duration_total;
 
 extern unsigned long dailyResetCounter;
 extern volatile unsigned long sw_watchdog_callback_count;
+
+
+extern I2C_bus_state I2C_state;
+extern unsigned long I2C_bus_cleared_count;
 
 
 #endif // GLOBALS_STATISTICS_H

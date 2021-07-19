@@ -3,6 +3,8 @@
 
 #include "../DataStructs/I2CTypes.h"
 
+I2C_bus_state I2C_check_bus(int8_t scl, int8_t sda);
+
 // **************************************************************************/
 // Central functions for I2C data transfers
 // **************************************************************************/

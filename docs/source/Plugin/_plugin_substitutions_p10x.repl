@@ -51,19 +51,28 @@
 .. |P103_usedlibraries| replace::  `.`
 .. |P103_datasheet| replace::  https://atlas-scientific.com/files/pH_EZO_Datasheet.pdf
 
-.. |P104_name| replace:: :cyan:`Atlas Scientific EC EZO`
-.. |P104_type| replace:: :cyan:`Environment`
-.. |P104_typename| replace:: :cyan:`Environment - Atlas Scientific EC EZO`
-.. |P104_porttype| replace:: `.`
-.. |P104_status| replace:: :yellow:`MAX`
-.. |P104_github| replace:: P104_Atlas_EZO_EC.ino
-.. _P104_github: https://github.com/letscontrolit/ESPEasy/blob/mega/src/_P104_Atlas_EZO_EC.ino 
+.. |P104_name| replace:: :cyan:`MAX7219 Dot matrix display`
+.. |P104_type| replace:: :cyan:`Display`
+.. |P104_typename| replace:: :cyan:`Display - MAX7219 dot matrix`
+.. |P104_porttype| replace:: `SPI`
+.. |P104_status| replace:: :yellow:`DISPLAY`
+.. |P104_github| replace:: P104_max7219_Dotmatrix.ino
+.. _P104_github: https://github.com/letscontrolit/ESPEasy/blob/mega/src/_P104_max7210_Dotmatrix.ino 
 .. |P104_usedby| replace:: `.`
 .. |P104_shortinfo| replace:: `.`
-.. |P104_maintainer| replace:: TD-er
+.. |P104_maintainer| replace:: tonhuisman
 .. |P104_compileinfo| replace:: `.`
-.. |P104_usedlibraries| replace::  `.`
-.. |P104_datasheet| replace::  https://atlas-scientific.com/files/electrically-isolated-ezo-carrier-board.pdf
+.. |P104_usedlibraries| replace::  `MD_Parola, MD_MAX72XX (modified to work with ESPEasy)`
+.. |P104_datasheet| replace::  `.`
+
+.. |P104-Font-Default_typename| replace:: `Default font characters`
+.. |P104-Font-Numeric7Segment_typename| replace:: `Num, double height characters`
+.. |P104-Font-DoubleHeight_typename| replace:: `Full, double height characters`
+.. |P104-Font-Vertical_typename| replace:: `Vertical font characters`
+.. |P104-Font-ExtASCII_typename| replace:: `Extended ASCII characters`
+.. |P104-Font-Arabic_typename| replace:: `Arabic font characters`
+.. |P104-Font-Greek_typename| replace:: `Greek font characters`
+.. |P104-Font-Katakana_typename| replace:: `Katakana font characters`
 
 
 .. |P105_name| replace:: :cyan:`Atlas Scientific EZO ORP`

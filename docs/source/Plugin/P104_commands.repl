@@ -1,0 +1,178 @@
+.. csv-table::
+        :header: "Command", "Extra information"
+        :widths: 20, 40
+
+        "
+        ``DotMatrix,clear[,All|<zone>]``
+        ","
+        Clears a zone by number or the entire display. All ``<zone>`` arguments are the zone numbers as shown on the Device settings page.
+        "
+        "
+        ``DotMatrix,update[,All|<zone>]``
+        ","
+        Update a zone, or all zones, with any updated content. Can be used instead of the Repeat (sec) option of a zone.
+        "
+        "
+        ``DotMatrix,size,<zone>,<size>``
+        ","
+        Set the size of the zone to ``<size>`` modules. Will cause a reconfiguration of all zones.
+        "
+        "
+        ``DotMatrix,[set]txt,<zone>,""<text content>""``
+        ","
+        Replace the text displayed in the zone if it is of Content type Text.
+
+        ``txt`` will only replace the current content.
+
+        ``settxt`` will also store it in the device settings if it is not longer than the allowed input length (100 characters), but *not* save the settings. 
+        "
+        "
+        ``DotMatrix,content,<zone>,<contenttype>``
+        ","
+        Set the Content type for the specified zone, where ``<contenttype>`` is a numeric value from 0..7.
+
+        0. Text
+        1. Text (reverse)
+        2. Clock
+        3. Clock sec
+        4. Date
+        5. Date yy
+        6. Date/time
+        7. Bar graph
+
+        Will cause a reconfiguration of all zones.
+        "
+        "
+        ``DotMatrix,alignment,<zone>,<alignmenttype>``
+        ","
+        Change the alignment of the zone, 0 = Left, 1 = Center, 2 = Right.
+        "
+        "
+        ``DotMatrix,anim.in,<zone>,<animationnr>``
+        ","
+        Change the Animation In setting for the zone. The ``<animationnr>`` value can be obtained from the dropdown in the Device settings page. The None (0) setting is not accepted here.
+        "
+        "
+        ``DotMatrix,anim.out,<zone>,<animationnr>``
+        ","
+        Change the Animation Out setting for the zone. The ``<animationnr>`` value can be obtained from the dropdown in the Device settings page.
+        "
+        "
+        ``DotMatrix,speed,<zone>,<speed_ms>``
+        ","
+        Set the Speed factor for the indicated zone. Valid values 0..65535.
+        "
+        "
+        ``DotMatrix,pause,<zone>,<pause_ms>``
+        ","
+        Set the Pause delay in milliseconds for the indicated zone. Valid values 0..65535.
+        "
+        "
+        ``DotMatrix,font,<zone>,<font_id>``
+        ","
+        Set the Font for the zone using a font ID.
+        
+        Valid font ID's:
+
+        0. Default
+        1. Numeric, double height
+        2. Full, double height
+        3. Vertical
+        4. Extended ASCII
+        5. Arabic
+        6. Greek
+        7. Katakana
+
+        NB: Not all fonts are available in all builds, selecting an unsupported font will fail the command.
+
+        Will cause a reconfiguration of all zones.
+        "
+        "
+        ``DotMatrix,layout,<zone>,<layouttype>``
+        ","
+        Set the Layout for the indicated zone.
+
+        0. Standard
+        1. Double, upper
+        2. Double, lower
+
+        Will cause a reconfiguration of all zones.
+        "
+        "
+        ``DotMatrix,specialeffect,<zone>,<specialeffect_id>``
+        ","
+        Set the Special effect for the indicated zone.
+
+        0. None
+        1. Flip up/down
+        2. Flip left/right
+        3. Flip u/d & l/r
+
+        Will cause a reconfiguration of all zones.
+        "
+        "
+        ``DotMatrix,offset,<zone>,<modulecount>``
+        ","
+        Set the Offset for the indicated zone. Valid values 0..254.
+
+        Will cause a reconfiguration of all zones.
+        "
+        "
+        ``DotMatrix,brightness,<zone>,<brightness>``
+        ","
+        Set the Brightness level for the indicated zone. Valid values 0 (minimum)..15 (maximum brightness).
+        "
+        "
+        ``DotMatrix,repeat,<zone>,<repeat_sec>``
+        ","
+        Set the Repeat (sec) in seconds for the indicated zone. Valid values -1 (disabled)..86400 (1 day).
+        "
+        "
+        ``DotMatrix,[set]bar,<zone>,'<graph_string>[|...]`'``
+        ","
+        Set a zone with a Content type of Bar graph with 1 to 8 graph strings, to be displayed as bar graphs.
+
+        ``bar`` will replace the current Bar graph(s) displayed.
+
+        ``setbar`` will also store it in the device settings if it is not longer than the allowed input length (100 characters), but *not* save the settings. 
+
+        The graph string used for displaying 1 or more bar graphs is formatted like this: *(square backets denoting optional arguments)*
+
+        ``<value>[,<max value>[,<min value>[,<direction[,<bartype>]]]]][|...]``
+
+        **<value>** The value to display. This is the only required argument. The usual ``[Taskname#Taskvar]``, ``%function%`` etc. syntax can be used here.
+
+        **<max value>** The maximum expected value, defaults to 100 (treated as if it was a percentage). Can be negative if desired, but the min value should always be lower than the max value, but the values will be swapped if min value is larger than max value.
+
+        **<min value>** The minimum expected value, defaults to 0. Negative value can be used, as well as > 0, the full bar graph will be scaled between the max and min values to fit in the zone.
+
+        The **<value>**, **<max value>** and **<min value>** can be provided with decimal values (of type ``double``).
+
+        **<direction>** The default direction is 0, meaning from right to left (low value is on the right side, high value is on the left side), the 'natural' direction for the hardware, and can be changed to 1 for left to right display.
+
+        **<bartype>** This can be 0, 1 or 2:
+
+        0. Max. available bar width will be used, determined by dividing 8 by the number of graph strings provided.
+        1. Single pixel bar width, resulting in a line-graph instead of a bar graph.
+        2. Alternating pixelated bar graph. Will only be applied if the bar width is at least 2 pxels, or else a line graph like bartype 1 will be displayed.
+
+        Most of these arguments are optional, but if a value is to be skipped, the default should be put in, f.e. ``[BME#Temperature],40,0,0,2`` to display a temperature on a 0 to 40 scale with bartype 2 from right to left.
+
+        Multiple graph strings can be used, these must be separated by a pipe symbol ``|``, f.e. ``[Living#Temperature],40,-20,0,1|[Refrigerator#Temperature],40,-20,0,1|[Freezer#Temperature],40,-20,0,1`` for displaying 3 line-graphs showing the temperatures of the livingroom, refrigerator and freezer on a -20 to 40 degrees centigrade scale from right to left. The 'zero-point' is around 1/3rd from the right of the zone.
+
+        If the width of the bar graph is over 2, and the zero-point is visible on the display (max value > 0 and min value < 0), then the zero-point is marked on each bar by turning the outer pixels off, like this:
+
+        .. code-block:: text
+
+           |    *********           |
+           |    **********          | (a positive value)
+           |    **********          |
+           |    *********           |
+           |              ****      |
+           |             *****      | (a negative value)
+           |             *****      |
+           |              ****      |
+                         ^
+                         +-- Zero-point
+
+        "

@@ -1190,6 +1190,9 @@ To create/register a plugin, you have to :
    #ifndef USES_P099
     #define USES_P099   // XPT2046 Touchscreen
    #endif
+   #ifndef USES_P104
+    #define USES_P104   // MAX7219 dot matrix
+   #endif
 #endif
 
 

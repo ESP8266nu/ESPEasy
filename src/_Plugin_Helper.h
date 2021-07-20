@@ -108,6 +108,8 @@ bool                 pluginTaskData_initialized(taskIndex_t taskIndex);
 
 String               getPluginCustomArgName(int varNr);
 
+int                  getFormItemIntCustomArgName(int varNr);
+
 // Helper function to create formatted custom values for display in the devices overview page.
 // When called from PLUGIN_WEBFORM_SHOW_VALUES, the last item should add a traling div_br class
 // if the regular values should also be displayed.

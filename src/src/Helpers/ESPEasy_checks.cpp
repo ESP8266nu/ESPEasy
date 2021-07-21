@@ -16,6 +16,9 @@
 #include "../DataStructs/NodeStruct.h"
 #include "../DataStructs/PortStatusStruct.h"
 #include "../DataStructs/ProtocolStruct.h"
+#ifdef USE_CUSTOM_PROVISIONING
+#include "../DataStructs/ProvisioningStruct.h"
+#endif
 #include "../DataStructs/RTCStruct.h"
 #include "../DataStructs/SecurityStruct.h"
 #include "../DataStructs/SettingsStruct.h"
@@ -69,12 +72,15 @@ void check_size() {
 void run_compiletime_checks() {
   #ifndef LIMIT_BUILD_SIZE
   check_size<CRCStruct,                             204u>();
-  check_size<SecurityStruct,                        593u>();
+  check_size<SecurityStruct,                        653u>();
   #ifdef ESP32
-  const unsigned int SettingsStructSize = (312 + 84 * TASKS_MAX);
+  const unsigned int SettingsStructSize = (316 + 84 * TASKS_MAX);
   #endif
   #ifdef ESP8266
-  const unsigned int SettingsStructSize = (288 + 84 * TASKS_MAX);
+  const unsigned int SettingsStructSize = (292 + 84 * TASKS_MAX);
+  #endif
+  #ifdef USE_CUSTOM_PROVISIONING
+  check_size<ProvisioningStruct,                    256u>();  
   #endif
   check_size<SettingsStruct,                        SettingsStructSize>();
   check_size<ControllerSettingsStruct,              820u>();
@@ -93,7 +99,7 @@ void run_compiletime_checks() {
   #ifdef USES_NOTIFIER
   check_size<NotificationStruct,                    3u>();
   #endif
-  check_size<NodeStruct,                            28u>();
+  check_size<NodeStruct,                            56u>();
   check_size<systemTimerStruct,                     24u>();
   check_size<RTCStruct,                             32u>();
   check_size<portStatusStruct,                      6u>();

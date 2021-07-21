@@ -71,6 +71,7 @@ bool WiFi_AP_Candidate::operator<(const WiFi_AP_Candidate& other) const {
   if (lowPriority != other.lowPriority) {
     return !lowPriority;
   }
+  // Prefer non hidden over hidden.
   if (isHidden != other.isHidden) {
     return !isHidden;
   }

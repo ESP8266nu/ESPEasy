@@ -2,7 +2,7 @@
 #define CONTROLLERQUEUE_SIMPLE_QUEUE_ELEMENT_STRING_ONLY_H
 
 #include "../../ESPEasy_common.h"
-#include "../DataStructs/UnitMessageCount.h"
+#include "../DataStructs/MessageRouteInfo.h"
 #include "../Globals/CPlugins.h"
 
 
@@ -26,7 +26,7 @@ public:
 
   bool isDuplicate(const simple_queue_element_string_only& other) const;
 
-  const UnitMessageCount_t* getUnitMessageCount() const { return nullptr; }
+  const MessageRouteInfo_t* getMessageRouteInfo() const { return nullptr; }
 
   String txt;
   unsigned long _timestamp         = millis();

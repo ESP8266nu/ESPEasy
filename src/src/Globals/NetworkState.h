@@ -9,8 +9,11 @@
 #include "../DataTypes/ESPEasy_plugin_functions.h"
 #include "../DataTypes/NetworkMedium.h"
 
+#include "../Helpers/LongTermTimer.h"
+
 // Ethernet Connectiopn status
 extern NetworkMedium_t active_network_medium;
+extern LongTermTimer last_network_medium_set_moment;;
 
 extern bool webserverRunning;
 extern bool webserver_init;

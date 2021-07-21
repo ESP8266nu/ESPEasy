@@ -110,19 +110,15 @@ bool P094_data_struct::loop() {
         case 13:
         {
           const size_t length = sentence_part.length();
-          bool valid          = length > 0;
-
-          for (size_t i = 0; i < length && valid; ++i) {
-            if ((sentence_part[i] > 127) || (sentence_part[i] < 32)) {
-              sentence_part = "";
+          if (length > 0) {
+            if (current_sentence_errored) {
               ++sentences_received_error;
-              valid = false;
+              sentence_part = "";
+            } else {
+              fullSentenceReceived = true;
             }
           }
-
-          if (valid) {
-            fullSentenceReceived = true;
-          }
+          current_sentence_errored = false;
           break;
         }
         case 10:
@@ -130,7 +126,11 @@ bool P094_data_struct::loop() {
           // Ignore LF
           break;
         default:
-          sentence_part += c;
+          if (c >= 32 && c < 127) {
+            sentence_part += c;
+          } else {
+            current_sentence_errored = true;
+          }
           break;
       }
 

@@ -4,14 +4,15 @@
 #include <Arduino.h>
 #include <IPAddress.h>
 #include <stdint.h>
+#include <list>
 
 #include "../../ESPEasy_common.h"
 
 #include "../DataStructs/WiFiEventData.h"
+#include "../DataStructs/MAC_address.h"
 #ifdef HAS_ETHERNET
 #include "../DataStructs/EthernetEventData.h"
 #endif
-
 
 #ifdef ESP32
 # include <esp_event.h>
@@ -32,8 +33,13 @@ extern WiFiEventHandler stationModeDHCPTimeoutHandler;
 extern WiFiEventHandler stationModeAuthModeChangeHandler;
 extern WiFiEventHandler APModeStationConnectedHandler;
 extern WiFiEventHandler APModeStationDisconnectedHandler;
+extern WiFiEventHandler APModeProbeRequestReceivedHandler;
+extern std::list<WiFiEventSoftAPModeProbeRequestReceived> APModeProbeRequestReceived_list;
 #endif // ifdef ESP8266
 
+#ifdef ESP32
+extern std::list<system_event_ap_probe_req_rx_t> APModeProbeRequestReceived_list;
+#endif
 
 extern WiFiEventData_t WiFiEventData;
 

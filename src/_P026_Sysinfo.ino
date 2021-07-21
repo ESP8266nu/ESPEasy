@@ -20,7 +20,7 @@
 #define P026_SENSOR_TYPE_INDEX  (P026_QUERY1_CONFIG_POS + VARS_PER_TASK)
 #define P026_NR_OUTPUT_VALUES   getValueCountFromSensorType(static_cast<Sensor_VType>(PCONFIG(P026_SENSOR_TYPE_INDEX)))
 
-#define P026_NR_OUTPUT_OPTIONS  13
+#define P026_NR_OUTPUT_OPTIONS  14
 
 const __FlashStringHelper * Plugin_026_valuename(uint8_t value_nr, bool displayString) {
   switch (value_nr) {
@@ -37,11 +37,15 @@ const __FlashStringHelper * Plugin_026_valuename(uint8_t value_nr, bool displayS
     case 10: return displayString ? F("Free Stack") : F("freestack");
     case 11: return displayString ? F("None") : F("");
     case 12: return displayString ? F("WiFi TX pwr") : F("txpwr");
+    case 13: return displayString ? F("Test Counter") : F("testcount");
     default:
       break;
   }
   return F("");
 }
+
+// Used for testing, just increment every time the task's PLUGIN_READ is called
+static uint32_t p026_read_count = 0;
 
 boolean Plugin_026(uint8_t function, struct EventStruct *event, String& string)
 {
@@ -174,6 +178,7 @@ boolean Plugin_026(uint8_t function, struct EventStruct *event, String& string)
         }
         addLog(LOG_LEVEL_INFO, log);
       }
+      ++p026_read_count;
       success = true;
       break;
     }
@@ -264,6 +269,11 @@ float P026_get_value(int type)
       break;
     }
 
+    case 13:
+    {
+      value = p026_read_count;
+      break;
+    }
   }
   return value;
 }

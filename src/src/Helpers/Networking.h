@@ -153,7 +153,7 @@ bool splitHostPortString(const String& hostPortString, String& host, uint16_t& p
 // Return value is everything after the hostname:port section (including /)
 String splitURL(const String& fullURL, String& host, uint16_t& port, String& file);
 
-#ifdef USE_SETTINGS_ARCHIVE
+#ifdef USE_DOWNLOAD
 
 // Download a file from a given URL and save to a local file named "file_save"
 // If the URL ends with a /, the file part will be assumed the same as file_save.
@@ -163,7 +163,7 @@ bool downloadFile(const String& url, String file_save);
 
 bool downloadFile(const String& url, String file_save, const String& user, const String& pass, String& error);
 
-#endif // USE_SETTINGS_ARCHIVE
+#endif
 
 
 

@@ -3,6 +3,7 @@
 
 #include "../WebServer/common.h"
 
+#include "../DataStructs/MAC_address.h"
 #include "../Globals/Plugins.h"
 #include "../Helpers/StringGenerator_GPIO.h"
 
@@ -181,6 +182,11 @@ bool getFormPassword(const String& id,
 void addFormIPBox(const String& label,
                   const String& id,
                   const uint8_t ip[4]);
+
+// ********************************************************************************
+// Add a MAC address Box form
+// ********************************************************************************
+void addFormMACBox(const String& label, const String& id, const MAC_address mac);
 
 // ********************************************************************************
 // Add a IP Access Control select dropdown list

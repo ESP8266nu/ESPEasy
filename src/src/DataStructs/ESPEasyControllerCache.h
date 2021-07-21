@@ -6,7 +6,7 @@
 #include "../DataStructs/RTC_cache_handler_struct.h"
 
 struct ControllerCache_struct {
-  ControllerCache_struct();
+  ControllerCache_struct() = default;
 
   ~ControllerCache_struct();
 

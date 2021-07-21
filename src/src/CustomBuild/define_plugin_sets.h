@@ -1082,6 +1082,7 @@ To create/register a plugin, you have to :
     //#define USES_P095  // TFT ILI9341
     //#define USES_P096  // eInk   (Needs lib_deps = Adafruit GFX Library, LOLIN_EPD )
     #define USES_P097   // Touch (ESP32)
+    #define USES_P098   // ESPEasy-NOW Reader
     //#define USES_P099   // XPT2046 Touchscreen
 #endif
 
@@ -1200,6 +1201,7 @@ To create/register a plugin, you have to :
     //#define USES_C015   // Blynk
     #define USES_C017   // Zabbix
     // #define USES_C018 // TTN RN2483
+    // #define USES_C019   // ESPEasy-NOW
 #endif
 
 
@@ -1475,8 +1477,14 @@ To create/register a plugin, you have to :
 */
 
 
-#if defined(USES_C018)
+#if defined(USES_C018) || defined(USES_C019)
   #define USES_PACKED_RAW_DATA
+#endif
+
+#if defined(USES_C019) || defined(USES_P098)
+  #ifndef USES_ESPEASY_NOW
+    #define USES_ESPEASY_NOW
+  #endif
 #endif
 
 #if defined(USES_P085) || defined (USES_P052) || defined(USES_P078) || defined(USES_P108)
@@ -1694,6 +1702,12 @@ To create/register a plugin, you have to :
     #ifndef FEATURE_DNS_SERVER
       #define FEATURE_DNS_SERVER
     #endif
+  #endif
+#endif
+
+#if defined(USE_SETTINGS_ARCHIVE) || defined(USE_CUSTOM_PROVISIONING)
+  #ifndef USE_DOWNLOAD
+    #define USE_DOWNLOAD
   #endif
 #endif
 

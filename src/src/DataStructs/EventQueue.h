@@ -9,7 +9,7 @@
 
 
 struct EventQueueStruct {
-  EventQueueStruct();
+  EventQueueStruct() = default;
 
   void add(const String& event);
 

@@ -123,7 +123,7 @@ void handleFileUpload() {
     // first data block, if this is the config file, check PID/Version
     if (upload.totalSize == 0)
     {
-      if (strcasecmp(upload.filename.c_str(), FILE_CONFIG) == 0)
+      if (matchFileType(upload.filename, FileType::CONFIG_DAT))
       {
         struct TempStruct {
           unsigned long PID;

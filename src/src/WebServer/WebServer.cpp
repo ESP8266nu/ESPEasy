@@ -293,6 +293,9 @@ void WebServerInit()
   webserver_init = true;
 
   // Prepare webserver pages
+
+  // FIXME TD-er: The added String() wrapper is needed for the latest ESP32 core lib.
+  // See: https://github.com/espressif/arduino-esp32/issues/4374
   #ifdef WEBSERVER_ROOT
   web_server.on(F("/"),             handle_root);
   // Entries for several captive portal URLs.

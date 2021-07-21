@@ -46,6 +46,8 @@ struct WiFi_AP_CandidatesList {
   // This will force a reconnect to the current AP if connection is lost.
   void markCurrentConnectionStable();
 
+  bool addedKnownCandidate() const { return _addedKnownCandidate; }
+
   int8_t scanComplete() const;
 
   WiFi_AP_Candidate_const_iterator scanned_begin() const {
@@ -85,7 +87,7 @@ private:
   WiFi_AP_Candidate currentCandidate;
 
   bool _mustLoadCredentials = true;
-
+  bool _addedKnownCandidate = false;
 };
 
 #endif // ifndef HELPERS_WIFI_AP_CANDIDATESLIST_H

@@ -1,7 +1,5 @@
 #include "EventQueue.h"
 
-EventQueueStruct::EventQueueStruct() {}
-
 void EventQueueStruct::add(const String& event)
 {
   _eventQueue.push_back(event);

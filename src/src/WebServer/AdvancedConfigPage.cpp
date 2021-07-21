@@ -104,6 +104,11 @@ void handle_advanced() {
     Settings.UseAlternativeDeepSleep(isFormItemChecked(LabelType::DEEP_SLEEP_ALTERNATIVE_CALL));
     #endif
 
+#ifdef USES_ESPEASY_NOW
+    Settings.UseESPEasyNow(isFormItemChecked(getInternalLabel(LabelType::USE_ESPEASY_NOW)));
+    Settings.ForceESPEasyNOWchannel = getFormItemInt(getInternalLabel(LabelType::FORCE_ESPEASY_NOW_CHANNEL));
+#endif
+
     addHtmlError(SaveSettings());
 
     if (node_time.systemTimePresent()) {
@@ -264,6 +269,18 @@ void handle_advanced() {
   addFormCheckBox(LabelType::WIFI_USE_LAST_CONN_FROM_RTC, Settings.UseLastWiFiFromRTC());
 
 
+
+#ifdef USES_ESPEASY_NOW
+  addFormCheckBox(LabelType::USE_ESPEASY_NOW, Settings.UseESPEasyNow());
+  {
+    addFormNumericBox(LabelType::FORCE_ESPEASY_NOW_CHANNEL, Settings.ForceESPEasyNOWchannel, 0, 14);
+    String note = F("Force channel to use for ");
+    note += F(ESPEASY_NOW_NAME);
+    note += F("-only mode (0 = use any channel)");
+    addFormNote(note);
+  }
+
+#endif
 
   addFormSeparator(2);
 

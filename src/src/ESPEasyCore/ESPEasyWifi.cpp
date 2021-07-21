@@ -21,6 +21,12 @@
 #include "../Helpers/StringConverter.h"
 #include "../Helpers/StringGenerator_WiFi.h"
 
+#ifdef USES_ESPEASY_NOW
+# include "../Globals/ESPEasy_now_handler.h"
+#endif
+
+
+
 // FIXME TD-er: Cleanup of WiFi code
 #ifdef ESPEASY_WIFI_CLEANUP_WORK_IN_PROGRESS
 bool ESPEasyWiFi_t::begin() {
@@ -416,6 +422,10 @@ void AttemptWiFiConnect() {
       // Maybe not scan async to give the ESP some slack in power consumption?
       const bool async = false;
       WifiScan(async);
+    } else {
+      if (!WiFi_AP_Candidates.addedKnownCandidate()) {
+        setNetworkMedium(NetworkMedium_t::ESPEasyNOW_only);
+      }
     }
   }
 
@@ -470,6 +480,11 @@ bool checkAndResetWiFi() {
       if (WiFi.RSSI() < 0 && NetworkLocalIP().isSet()) {
         //if (WiFi.channel() == WiFiEventData.usedChannel || WiFiEventData.usedChannel == 0) {
           // This is a valid status, no need to reset
+          if (!WiFiEventData.WiFiServicesInitialized()) {
+            WiFiEventData.setWiFiServicesInitialized();
+            setNetworkMedium(NetworkMedium_t::WIFI);
+          }
+
           return false;
         //}
       }
@@ -533,6 +548,9 @@ void resetWiFi() {
 
 void initWiFi()
 {
+#ifdef USES_ESPEASY_NOW
+  ESPEasy_now_handler.end();
+#endif
 #ifdef ESP8266
 
   // See https://github.com/esp8266/Arduino/issues/5527#issuecomment-460537616
@@ -559,6 +577,8 @@ void initWiFi()
   stationModeAuthModeChangeHandler = WiFi.onStationModeAuthModeChanged(onStationModeAuthModeChanged);
   APModeStationConnectedHandler = WiFi.onSoftAPModeStationConnected(onConnectedAPmode);
   APModeStationDisconnectedHandler = WiFi.onSoftAPModeStationDisconnected(onDisconnectedAPmode);
+  APModeProbeRequestReceivedHandler = WiFi.onSoftAPModeProbeRequestReceived(onProbeRequestAPmode);
+
 #endif
 }
 
@@ -566,7 +586,12 @@ void initWiFi()
 // Configure WiFi TX power
 // ********************************************************************************
 void SetWiFiTXpower() {
-  SetWiFiTXpower(0.0f); // Just some minimal value, will be adjusted in SetWiFiTXpower
+  if (Settings.UseESPEasyNow()) {
+    // Set at max power for use with ESPEasy-NOW.
+    SetWiFiTXpower(30, -99);
+  } else {
+    SetWiFiTXpower(0.0f); // Just some minimal value, will be adjusted in SetWiFiTXpower
+  }
 }
 
 void SetWiFiTXpower(float dBm) { 
@@ -579,8 +604,9 @@ void SetWiFiTXpower(float dBm, float rssi) {
     return;
   }
 
-  if (Settings.UseMaxTXpowerForSending()) {
-    dBm = 30; // Just some max, will be limited later
+  if (Settings.UseESPEasyNow()) {
+    // Do not mess with WiFi TX power when ESPEasy-now is used.
+    return;
   }
 
   // Range ESP32  : 2dBm - 20dBm
@@ -692,11 +718,20 @@ void SetWiFiTXpower(float dBm, float rssi) {
 }
 
 float GetRSSIthreshold(float& maxTXpwr) {
-  maxTXpwr = Settings.getWiFi_TX_power();
+    if (Settings.UseMaxTXpowerForSending()
+#ifdef USES_ESPEASY_NOW
+      || isESPEasy_now_only()
+#endif
+  ) {
+    maxTXpwr = 30.0;
+  } else {
+    maxTXpwr = Settings.getWiFi_TX_power();
+  }
   float threshold = -72;
   switch (getConnectionProtocol()) {
     case WiFiConnectionProtocol::WiFi_Protocol_11b:
       threshold = -91;
+      if (maxTXpwr > 20.5) maxTXpwr = 20.5;
       break;
     case WiFiConnectionProtocol::WiFi_Protocol_11g:
       threshold = -75;
@@ -976,6 +1011,12 @@ void setSTA(bool enable) {
 void setAP(bool enable) {
   WiFiMode_t wifimode = WiFi.getMode();
 
+  #ifdef USES_ESPEASY_NOW
+  if (!enable && use_EspEasy_now) {
+    ESPEasy_now_handler.end();
+  }
+  #endif
+
   switch (wifimode) {
     case WIFI_OFF:
 
@@ -1216,6 +1257,7 @@ bool wifiConnectTimeoutReached() {
   }
 
   if (WifiIsAP(WiFi.getMode())) {
+    // FIXME TD-er: What to do here when using ESPEasy-NOW mode?
     // Initial setup of WiFi, may take much longer since accesspoint is still active.
     return WiFiEventData.last_wifi_connect_attempt_moment.timeoutReached(20000);
   }
@@ -1233,10 +1275,23 @@ bool wifiConnectTimeoutReached() {
 
 bool wifiAPmodeActivelyUsed()
 {
+  #ifdef USES_ESPEASY_NOW
+  if (isESPEasy_now_only() &&
+        last_network_medium_set_moment.timeoutReached(600 * 1000)) 
+  {
+    // Only allow the ESPEasy_NOW_only mode for 10 minutes
+    setNetworkMedium(Settings.NetworkMedium);
+    return false;
+  } else if (ESPEasy_now_handler.active()) {
+    return true;
+  }
+  #endif
+
   if (!WifiIsAP(WiFi.getMode()) || (!WiFiEventData.timerAPoff.isSet())) {
     // AP not active or soon to be disabled in processDisableAPmode()
     return false;
   }
+
   return WiFi.softAPgetStationNum() != 0;
 
   // FIXME TD-er: is effectively checking for AP active enough or must really check for connected clients to prevent automatic wifi
@@ -1245,11 +1300,16 @@ bool wifiAPmodeActivelyUsed()
 
 void setConnectionSpeed() {
   #ifdef ESP8266
-
   if (!Settings.ForceWiFi_bg_mode() || (WiFiEventData.wifi_connect_attempt > 10)) {
     WiFi.setPhyMode(WIFI_PHY_MODE_11N);
   } else {
-    WiFi.setPhyMode(WIFI_PHY_MODE_11G);
+    WiFiPhyMode_t phyMode = WIFI_PHY_MODE_11G;
+    #ifdef USE_ESPEASY_NOW
+    if (active_network_medium == NetworkMedium_t::ESPEasyNOW_only) {
+      phyMode = WIFI_PHY_MODE_11B;
+    }
+    #endif
+    WiFi.setPhyMode(phyMode);
   }
   #endif // ifdef ESP8266
 
@@ -1272,6 +1332,7 @@ void setConnectionSpeed() {
   }
   */
   #endif // ifdef ESP32
+  SetWiFiTXpower();
 }
 
 void setupStaticIPconfig() {

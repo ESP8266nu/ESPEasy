@@ -72,7 +72,7 @@ boolean Plugin_094(uint8_t function, struct EventStruct *event, String& string) 
       Device[deviceCount].SendDataOption     = true;
       Device[deviceCount].TimerOption        = true;
       Device[deviceCount].GlobalSyncOption   = false;
-//      Device[deviceCount].DuplicateDetection = true;
+      Device[deviceCount].DuplicateDetection = true;
       break;
     }
 

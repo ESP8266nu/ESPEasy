@@ -153,11 +153,11 @@ DEFINE_Cxxx_DELAY_QUEUE_MACRO(0, 18)
 #endif // ifdef USES_C018
 
 
-/*
- #ifdef USES_C019
-   DEFINE_Cxxx_DELAY_QUEUE_MACRO(0, 19)
- #endif
- */
+#ifdef USES_C019
+# include "../ControllerQueue/C019_queue_element.h"
+DEFINE_Cxxx_DELAY_QUEUE_MACRO(0, 19)
+#endif // ifdef USES_C019
+
 
 /*
  #ifdef USES_C020

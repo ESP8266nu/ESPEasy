@@ -1,6 +1,8 @@
 #ifndef DATASTRUCTS_WIFIEVENTDATA_H
 #define DATASTRUCTS_WIFIEVENTDATA_H
 
+#include "../../ESPEasy-Globals.h"
+
 #include "../DataStructs/MAC_address.h"
 #include "../DataTypes/WiFiDisconnectReason.h"
 #include "../Helpers/LongTermTimer.h"
@@ -56,6 +58,7 @@ struct WiFiEventData_t {
   void setAuthMode(uint8_t newMode);
 
 
+
   // WiFi related data
   bool          wifiSetup        = false;
   bool          wifiSetupConnect = false;
@@ -66,8 +69,8 @@ struct WiFiEventData_t {
   int           wifi_reconnects        = -1; // First connection attempt is not a reconnect.
   String        last_ssid;
   float         wifi_TX_pwr            = 0;
-  bool          bssid_changed   = false;
-  bool          channel_changed = false;
+  bool          bssid_changed          = false;
+  bool          channel_changed        = false;
 
   uint8_t       auth_mode = 0;
   uint8_t       lastScanChannel = 0;
@@ -86,7 +89,8 @@ struct WiFiEventData_t {
   LongTermTimer::Duration lastConnectedDuration_us = 0ll;
   LongTermTimer           timerAPoff;   // Timer to check whether the AP mode should be disabled (0 = disabled)
   LongTermTimer           timerAPstart; // Timer to start AP mode, started when no valid network is detected.
-  bool                    intent_to_reboot             = false;
+  LongTermTimer           lastAPmodeStationConnectMoment;
+  bool                    intent_to_reboot = false;
   MAC_address             lastMacConnectedAPmode;
   MAC_address             lastMacDisconnectedAPmode;
 
@@ -103,6 +107,7 @@ struct WiFiEventData_t {
   bool processedConnectAPmode    = true;
   bool processedDisconnectAPmode = true;
   bool processedScanDone         = true;
+  bool processedProbeRequestAPmode = true;
   bool wifiConnectAttemptNeeded  = true;
   bool wifiConnectInProgress     = false;
   bool warnedNoValidWiFiSettings = false;

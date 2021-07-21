@@ -1,6 +1,7 @@
 #include "../Helpers/WiFi_AP_CandidatesList.h"
 
 #include "../ESPEasyCore/ESPEasy_Log.h"
+#include "../Globals/ESPEasyWiFiEvent.h"
 #include "../Globals/RTC.h"
 #include "../Globals/SecuritySettings.h"
 #include "../Globals/Settings.h"
@@ -12,6 +13,12 @@
 #define WIFI_CUSTOM_DEPLOYMENT_KEY_INDEX     3
 #define WIFI_CUSTOM_SUPPORT_KEY_INDEX        4
 #define WIFI_CREDENTIALS_FALLBACK_SSID_INDEX 5
+
+
+#ifdef USES_ESPEASY_NOW
+#define ESPEASY_NOW_TMP_SSID       "ESPEASY_NOW"
+#define ESPEASY_NOW_TMP_PASSPHRASE "random_passphrase"
+#endif
 
 WiFi_AP_CandidatesList::WiFi_AP_CandidatesList() {
   known.clear();
@@ -25,6 +32,8 @@ void WiFi_AP_CandidatesList::load_knownCredentials() {
   _mustLoadCredentials = false;
   known.clear();
   candidates.clear();
+  _addedKnownCandidate = false;
+//  addFromRTC();
 
   {
     // Add the known SSIDs
@@ -72,6 +81,7 @@ void WiFi_AP_CandidatesList::force_reload() {
 
 void WiFi_AP_CandidatesList::begin_sync_scan() {
   candidates.clear();
+  _addedKnownCandidate = false;
 }
 
 void WiFi_AP_CandidatesList::purge_expired() {
@@ -234,6 +244,7 @@ void WiFi_AP_CandidatesList::markCurrentConnectionStable() {
   }
 
   candidates.clear();
+  _addedKnownCandidate = false;
   addFromRTC(); // Store the current one from RTC as the first candidate for a reconnect.
 }
 
@@ -302,6 +313,7 @@ void WiFi_AP_CandidatesList::loadCandidatesFromScanned() {
 
             if (tmp.usable()) {
               candidates.push_back(tmp);
+              _addedKnownCandidate = true;
 
               // Check all knowns as we may have several AP's with the same SSID and different passwords.
             }
@@ -409,8 +421,10 @@ void WiFi_AP_CandidatesList::purge_unusable() {
       it = candidates.erase(it);
     }
   }
-  candidates.sort();
-  candidates.unique();
+  if (candidates.size() > 1) {
+    candidates.sort();
+    candidates.unique();
+  }
 }
 
 bool WiFi_AP_CandidatesList::get_SSID_key(uint8_t index, String& ssid, String& key) const {
@@ -462,8 +476,6 @@ bool WiFi_AP_CandidatesList::get_SSID_key(uint8_t index, String& ssid, String& k
   }
 
   // TODO TD-er: Read other credentials from extra file.
-
-
 
   // Spaces are allowed in both SSID and pass phrase, so make sure to not trim the ssid and key.
   return true;

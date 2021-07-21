@@ -3,7 +3,7 @@
 
 #include "../DataStructs/ControllerSettingsStruct.h"
 #include "../DataStructs/TimingStats.h"
-#include "../DataStructs/UnitMessageCount.h"
+#include "../DataStructs/MessageRouteInfo.h"
 #include "../ESPEasyCore/ESPEasy_Log.h"
 #include "../Globals/CPlugins.h"
 #include "../Globals/ESPEasy_Scheduler.h"
@@ -108,12 +108,12 @@ struct ControllerDelayHandlerStruct {
   bool isDuplicate(const T& element) const {
     // Some controllers may receive duplicate messages, due to lost acknowledgement
     // This is actually the same message, so this should not be processed.
-    if (!unitLastMessageCount.isNew(element.getUnitMessageCount())) {
+    if (!unitMessageRouteInfo_map.isNew(element.getMessageRouteInfo())) {
       return true;
     }
     // The unit message count is still stored to make sure a new one with the same count
     // is considered a duplicate, even when the queue is empty.
-    unitLastMessageCount.add(element.getUnitMessageCount());
+    unitMessageRouteInfo_map.add(element.getMessageRouteInfo());
 
     // the setting 'deduplicate' does look at the content of the message and only compares it to messages in the queue.
     if (deduplicate && !sendQueue.empty()) {
@@ -161,7 +161,7 @@ struct ControllerDelayHandlerStruct {
     if (loglevelActiveFor(LOG_LEVEL_DEBUG)) {
       const cpluginID_t cpluginID = getCPluginID_from_ControllerIndex(element.controller_idx);
       String log = get_formatted_Controller_number(cpluginID);
-      log += " : queue full";
+      log += F(" : queue full");
       addLog(LOG_LEVEL_DEBUG, log);
     }
 #endif // ifndef BUILD_NO_DEBUG
@@ -240,7 +240,7 @@ struct ControllerDelayHandlerStruct {
   }
 
   std::list<T>  sendQueue;
-  mutable UnitLastMessageCount_map unitLastMessageCount;
+  mutable UnitMessageRouteInfo_map unitMessageRouteInfo_map;
   unsigned long lastSend;
   unsigned int  minTimeBetweenMessages;
   unsigned long expire_timeout = 0;
@@ -299,7 +299,8 @@ struct ControllerDelayHandlerStruct {
     } else {                                                                                                           \
       LoadControllerSettings(element->controller_idx, ControllerSettings);                                             \
       C##NNN####M##_DelayHandler->configureControllerSettings(ControllerSettings);                                     \
-      if (!C##NNN####M##_DelayHandler->readyToProcess(*element)) { ready = false; }                                    \
+      if (!C##NNN####M##_DelayHandler->readyToProcess(*element) &&                                                      \
+          !ControllerSettings.enableESPEasyNowFallback()) { ready = false; }                                           \
     }                                                                                                                  \
     if (ready) {                                                                                                       \
       START_TIMER;                                                                                                     \

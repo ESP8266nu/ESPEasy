@@ -1,9 +1,9 @@
 #ifndef GLOBALS_NODES_H
 #define GLOBALS_NODES_H
 
-#include "../DataStructs/NodeStruct.h"
+#include "../DataStructs/NodesHandler.h"
 
-extern NodesMap Nodes;
+extern NodesHandler Nodes;
 
 
 #endif // GLOBALS_NODES_H

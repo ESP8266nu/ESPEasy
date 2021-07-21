@@ -75,6 +75,8 @@ bool          supportedPluginID(pluginID_t pluginID);
 
 deviceIndex_t getDeviceIndex_from_TaskIndex(taskIndex_t taskIndex);
 
+pluginID_t    getPluginID_from_TaskIndex(taskIndex_t taskIndex);
+
 
 /********************************************************************************************\
    Find Device Index given a plugin ID

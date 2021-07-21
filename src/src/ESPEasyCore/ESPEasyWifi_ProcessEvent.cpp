@@ -3,17 +3,21 @@
 // FIXME TD-er: Rename this to ESPEasyNetwork_ProcessEvent
 
 #include "../../ESPEasy-Globals.h"
-
+#include "../DataStructs/NodesHandler.h"
 #include "../ESPEasyCore/ESPEasy_Log.h"
 #include "../ESPEasyCore/ESPEasyNetwork.h"
 #include "../ESPEasyCore/ESPEasyWifi.h"
 #include "../ESPEasyCore/ESPEasyWiFiEvent.h"
 #include "../Globals/ESPEasyWiFiEvent.h"
 #include "../Globals/ESPEasy_Scheduler.h"
+#include "../Globals/ESPEasy_now_handler.h"
+#include "../Globals/ESPEasy_now_state.h"
+#include "../Globals/ESPEasy_now_state.h"
 #include "../Globals/ESPEasy_time.h"
 #include "../Globals/EventQueue.h"
 #include "../Globals/MQTT.h"
 #include "../Globals/NetworkState.h"
+#include "../Globals/Nodes.h"
 #include "../Globals/RTC.h"
 #include "../Globals/SecuritySettings.h"
 #include "../Globals/Settings.h"
@@ -29,7 +33,6 @@
 #include "../Helpers/Scheduler.h"
 #include "../Helpers/StringConverter.h"
 #include "../Helpers/StringGenerator_WiFi.h"
-
 
 // ********************************************************************************
 // Called from the loop() to make sure events are processed as soon as possible.
@@ -93,7 +96,7 @@ void handle_unprocessedNetworkEvents()
     }
   }
 
-  if (active_network_medium == NetworkMedium_t::WIFI) {
+  if (active_network_medium == NetworkMedium_t::WIFI || active_network_medium == NetworkMedium_t::ESPEasyNOW_only) {
     if ((!WiFiEventData.WiFiServicesInitialized()) || WiFiEventData.unprocessedWifiEvents()) {
       if (WiFi.status() == WL_DISCONNECTED && WiFiEventData.wifiConnectInProgress) {
         if (WiFiEventData.wifiConnectInProgress) {
@@ -181,6 +184,8 @@ void handle_unprocessedNetworkEvents()
 
     if (!WiFiEventData.processedConnectAPmode) { processConnectAPmode(); }
 
+    if (!WiFiEventData.processedProbeRequestAPmode) { processProbeRequestAPmode(); }
+
     if (WiFiEventData.timerAPoff.isSet()) { processDisableAPmode(); }
 
     if (!WiFiEventData.processedScanDone) { processScanDone(); }
@@ -250,6 +255,12 @@ void processDisconnect() {
   if (WiFiEventData.lastConnectedDuration_us > 0 && (WiFiEventData.lastConnectedDuration_us / 1000) < 5000) {
     mustRestartWiFi = true;
   }
+  
+  #ifdef USES_ESPEASY_NOW
+  if (use_EspEasy_now) {
+    mustRestartWiFi = true;
+  }
+  #endif
 
   if (mustRestartWiFi) {
     WifiDisconnect(); // Needed or else node may not reconnect reliably.
@@ -456,6 +467,32 @@ void processDisconnectAPmode() {
   }
 }
 
+void processProbeRequestAPmode() {
+  if (WiFiEventData.processedProbeRequestAPmode) { return; }
+
+  const MAC_address mac(APModeProbeRequestReceived_list.front().mac);
+  const int rssi = APModeProbeRequestReceived_list.front().rssi;
+
+  Nodes.setRSSI(mac, rssi);
+
+  if (loglevelActiveFor(LOG_LEVEL_INFO)) {
+    String    log                 = F("AP Mode: Probe Request: ");
+    log += mac.toString();
+    log += F(" (");
+    log += rssi;
+    log += F(" dBm)");
+    addLog(LOG_LEVEL_INFO, log);
+  }
+
+  // FIXME TD-er: Must create an answer for ESPEasy-NOW node discovery
+  #ifdef USES_ESPEASY_NOW
+  ESPEasy_now_handler.sendDiscoveryAnnounce(mac, WiFiEventData.usedChannel);
+  #endif
+
+  APModeProbeRequestReceived_list.pop_front();
+  WiFiEventData.processedProbeRequestAPmode = APModeProbeRequestReceived_list.size() == 0;
+}
+
 // Client connects to AP on this node
 void processConnectAPmode() {
   if (WiFiEventData.processedConnectAPmode) { return; }
@@ -488,7 +525,7 @@ void processDisableAPmode() {
 
   if (WifiIsAP(WiFi.getMode())) {
     // disable AP after timeout and no clients connected.
-    if (WiFiEventData.timerAPoff.timeReached() && (WiFi.softAPgetStationNum() == 0)) {
+    if (WiFiEventData.timerAPoff.timeReached() && !wifiAPmodeActivelyUsed()) {
       setAP(false);
     }
   }
@@ -533,10 +570,35 @@ void processScanDone() {
 
   WiFi_AP_Candidates.process_WiFiscan(scanCompleteStatus);
 
-  NetworkConnectRelaxed();
+  if (WiFi_AP_Candidates.addedKnownCandidate()) {
+    NetworkConnectRelaxed();
+  }
+  
+  #ifdef USES_ESPEASY_NOW
+  if (Settings.UseESPEasyNow()) {
+    ESPEasy_now_handler.addPeerFromWiFiScan();
+    if (!NetworkConnected()) {
+      if (WiFi_AP_Candidates.addedKnownCandidate()) {
+        WiFi_AP_Candidates.force_reload();
+  //        if (isESPEasy_now_only() || !ESPEasy_now_handler.active()) {
+          WifiDisconnect();
+          setAP(false);
+          ESPEasy_now_handler.end();
+
+          // Disable ESPEasy_now for 10 seconds to give opportunity to connect to WiFi.
+          WiFiEventData.wifiConnectAttemptNeeded = true;
+          temp_disable_EspEasy_now_timer = millis() + 10000;
+          setSTA(false);
+          setNetworkMedium(Settings.NetworkMedium);
+          NetworkConnectRelaxed();
+  //        }
+      } else {
+        setNetworkMedium(NetworkMedium_t::ESPEasyNOW_only);
+      }
+    }
+  }
+  #endif
 }
-
-
 
 
 #ifdef HAS_ETHERNET

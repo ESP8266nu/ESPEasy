@@ -2,7 +2,7 @@
 #define CONTROLLERQUEUE_MQTT_QUEUE_ELEMENT_H
 
 #include "../../ESPEasy_common.h"
-#include "../DataStructs/UnitMessageCount.h"
+#include "../DataStructs/MessageRouteInfo.h"
 #include "../Globals/CPlugins.h"
 
 
@@ -34,8 +34,8 @@ public:
 
   bool isDuplicate(const MQTT_queue_element& other) const;
 
-  const UnitMessageCount_t* getUnitMessageCount() const { return &UnitMessageCount; }
-  UnitMessageCount_t* getUnitMessageCount() { return &UnitMessageCount; }
+  const MessageRouteInfo_t* getMessageRouteInfo() const { return &MessageRouteInfo; }
+  MessageRouteInfo_t* getMessageRouteInfo() { return &MessageRouteInfo; }
 
   void removeEmptyTopics();
 
@@ -45,7 +45,7 @@ public:
   taskIndex_t TaskIndex            = INVALID_TASK_INDEX;
   controllerIndex_t controller_idx = INVALID_CONTROLLER_INDEX;
   bool _retained                   = false;
-  UnitMessageCount_t UnitMessageCount;
+  MessageRouteInfo_t MessageRouteInfo;
 };
 
 

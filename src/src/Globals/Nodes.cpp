@@ -1,4 +1,4 @@
 #include "../Globals/Nodes.h"
 
 
-NodesMap Nodes;
+NodesHandler Nodes;

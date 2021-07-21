@@ -5,6 +5,7 @@
 
 #include "../Globals/EventQueue.h"
 #include "../Globals/NetworkState.h"
+#include "../Globals/ESPEasy_now_handler.h"
 #include "../Globals/RTC.h"
 #include "../Globals/Settings.h"
 #include "../Globals/TimeZone.h"
@@ -19,11 +20,11 @@
 
 
 ESPEasy_time::ESPEasy_time() {
-  memset(&tm, 0, sizeof(tm));
-  memset(&tsRise, 0, sizeof(tm));
-  memset(&tsSet, 0, sizeof(tm));
+  memset(&tm,      0, sizeof(tm));
+  memset(&tsRise,  0, sizeof(tm));
+  memset(&tsSet,   0, sizeof(tm));
   memset(&sunRise, 0, sizeof(tm));
-  memset(&sunSet, 0, sizeof(tm));
+  memset(&sunSet,  0, sizeof(tm));
 }
 
 struct tm ESPEasy_time::addSeconds(const struct tm& ts, int seconds, bool toLocalTime) const {
@@ -38,7 +39,6 @@ struct tm ESPEasy_time::addSeconds(const struct tm& ts, int seconds, bool toLoca
   breakTime(time, result);
   return result;
 }
-
 
 void ESPEasy_time::breakTime(unsigned long timeInput, struct tm& tm) {
   uint32_t time = (uint32_t)timeInput;
@@ -77,17 +77,23 @@ void ESPEasy_time::breakTime(unsigned long timeInput, struct tm& tm) {
 void ESPEasy_time::restoreLastKnownUnixTime(unsigned long lastSysTime, uint8_t deepSleepState)
 {
   static bool firstCall = true;
-  if (firstCall && lastSysTime != 0 && deepSleepState != 1) {
-    firstCall = false;
-    timeSource = Restore_RTC_time_source;
-    externalTimeSource = static_cast<double>(lastSysTime);
+
+  if (firstCall && (lastSysTime != 0) && (deepSleepState != 1)) {
+    firstCall          = false;
+    timeSource         = timeSource_t::Restore_RTC_time_source;
+    externalUnixTime_d = static_cast<double>(lastSysTime);
+
     // Do not add the current uptime as offset. This will be done when calling now()
+    lastSyncTime = 0;
+    initTime();
   }
 }
 
 void ESPEasy_time::setExternalTimeSource(double time, timeSource_t source) {
-  timeSource = source;
-  externalTimeSource = time;
+  timeSource         = source;
+  externalUnixTime_d = time;
+  lastSyncTime       = millis();
+  nextSyncTime       = 0;
 }
 
 uint32_t ESPEasy_time::getUnixTime() const
@@ -113,27 +119,39 @@ unsigned long ESPEasy_time::now() {
     // nextSyncTime & sysTime are in seconds
     double unixTime_d = -1.0;
 
-    if (externalTimeSource > 0.0f) {
-      unixTime_d         = externalTimeSource;
-      externalTimeSource = -1.0;
+    if (externalUnixTime_d > 0.0) {
+      unixTime_d = externalUnixTime_d;
+
+      // Correct for the delay between the last received external time and applying it
+      unixTime_d        += (timePassedSince(lastSyncTime) / 1000.0);
+      externalUnixTime_d = -1.0;
     }
 
-    if ((unixTime_d > 0.0f) || getNtpTime(unixTime_d)) {
+    // Try NTP if the time source is not external.
+    bool updatedTime = (unixTime_d > 0.0);
+    if (!isExternalTimeSource(timeSource) || timeSource_t::NTP_time_source == timeSource) {
+      if (getNtpTime(unixTime_d)) {
+        updatedTime = true;
+      }
+    }
+    if (updatedTime) {
       prevMillis = millis(); // restart counting from now (thanks to Korman for this fix)
       timeSynced = true;
 
       if (loglevelActiveFor(LOG_LEVEL_INFO)) {
         double time_offset = unixTime_d - sysTime;
-        String log = F("Time set to ");
-        log += String(unixTime_d,3);
+        String log         = F("Time set to ");
+        log += String(unixTime_d, 3);
 
-        if (-86400 < time_offset && time_offset < 86400) {
+        if ((-86400 < time_offset) && (time_offset < 86400)) {
           // Only useful to show adjustment if it is less than a day.
           log += F(" Time adjusted by ");
           log += String(time_offset * 1000.0f);
           log += F(" msec. Wander: ");
           log += String((time_offset * 1000.0f) / syncInterval);
           log += F(" msec/second");
+          log += F(" Source: ");
+          log += toString(timeSource);
         }
         addLog(LOG_LEVEL_INFO, log);
       }
@@ -142,6 +160,11 @@ unsigned long ESPEasy_time::now() {
 
       time_zone.applyTimeZone(unixTime_d);
       nextSyncTime = (uint32_t)unixTime_d + syncInterval;
+      if (isExternalTimeSource(timeSource)) {
+        #ifdef USES_ESPEASY_NOW
+        ESPEasy_now_handler.sendNTPbroadcast();
+        #endif
+      }
     }
   }
   RTC.lastSysTime = static_cast<unsigned long>(sysTime);
@@ -150,6 +173,7 @@ unsigned long ESPEasy_time::now() {
 
   if (timeSynced) {
     calcSunRiseAndSet();
+
     if (loglevelActiveFor(LOG_LEVEL_INFO)) {
       String log = F("Local time: ");
       log += getDateTimeString('-', ':', ' ');
@@ -173,7 +197,6 @@ unsigned long ESPEasy_time::now() {
   return (unsigned long)localSystime;
 }
 
-
 bool ESPEasy_time::reportNewMinute()
 {
   now();
@@ -190,28 +213,33 @@ bool ESPEasy_time::reportNewMinute()
   return true;
 }
 
-
-
 bool ESPEasy_time::systemTimePresent() const {
   switch (timeSource) {
-    case No_time_source: 
+    case timeSource_t::No_time_source: 
       break;
-    case NTP_time_source:  
-    case Restore_RTC_time_source: 
-    case GPS_time_source:
-    case Manual_set:
+    case timeSource_t::NTP_time_source:  
+    case timeSource_t::Restore_RTC_time_source: 
+    case timeSource_t::GPS_time_source:
+    case timeSource_t::GPS_PPS_time_source:
+    case timeSource_t::ESP_now_peer:
+    case timeSource_t::Manual_set:
       return true;
   }
-  return nextSyncTime > 0 || Settings.UseNTP || externalTimeSource > 0.0f;
+  return nextSyncTime > 0 || Settings.UseNTP || externalUnixTime_d > 0.0f;
 }
-
-
 
 bool ESPEasy_time::getNtpTime(double& unixTime_d)
 {
   if (!Settings.UseNTP || !NetworkConnected(10)) {
     return false;
   }
+  if (lastNTPSyncTime != 0) {
+    if (timePassedSince(lastNTPSyncTime) < static_cast<long>(1000 * syncInterval)) {
+      // Make sure not to flood the NTP servers with requests.
+      return false;
+    }
+  }
+
   IPAddress timeServerIP;
   String    log = F("NTP  : NTP host ");
 
@@ -232,7 +260,7 @@ bool ESPEasy_time::getNtpTime(double& unixTime_d)
 
     // When pool host fails, retry can be much sooner
     nextSyncTime = sysTime + 5;
-    useNTPpool = true;
+    useNTPpool   = true;
   }
 
   log += " (";
@@ -262,10 +290,10 @@ bool ESPEasy_time::getNtpTime(double& unixTime_d)
   while (udp.parsePacket() > 0) { // discard any previously received packets
   }
   memset(packetBuffer, 0, NTP_PACKET_SIZE);
-  packetBuffer[0]  = 0b11100011;  // LI, Version, Mode
-  packetBuffer[1]  = 0;           // Stratum, or type of clock
-  packetBuffer[2]  = 6;           // Polling Interval
-  packetBuffer[3]  = 0xEC;        // Peer Clock Precision
+  packetBuffer[0]  = 0b11100011; // LI, Version, Mode
+  packetBuffer[1]  = 0;          // Stratum, or type of clock
+  packetBuffer[2]  = 6;          // Polling Interval
+  packetBuffer[3]  = 0xEC;       // Peer Clock Precision
   packetBuffer[12] = 49;
   packetBuffer[13] = 0x4E;
   packetBuffer[14] = 49;
@@ -291,7 +319,7 @@ bool ESPEasy_time::getNtpTime(double& unixTime_d)
       udp.read(packetBuffer, NTP_PACKET_SIZE); // read packet into the buffer
 
       if ((packetBuffer[0] & 0b11000000) == 0b11000000) {
-        // Leap-Indicator: unknown (clock unsynchronized) 
+        // Leap-Indicator: unknown (clock unsynchronized)
         // See: https://github.com/letscontrolit/ESPEasy/issues/2886#issuecomment-586656384
         if (loglevelActiveFor(LOG_LEVEL_ERROR)) {
           String log = F("NTP  : NTP host (");
@@ -299,13 +327,14 @@ bool ESPEasy_time::getNtpTime(double& unixTime_d)
           log += ") unsynchronized";
           addLog(LOG_LEVEL_ERROR, log);
         }
+
         if (!useNTPpool) {
           // Does not make sense to try it very often if a single host is used which is not synchronized.
           nextSyncTime = sysTime + 120;
         }
         udp.stop();
         return false;
-      } 
+      }
 
       // For more detailed info on improving accuracy, see:
       // https://github.com/lettier/ntpclient/issues/4#issuecomment-360703503
@@ -319,6 +348,7 @@ bool ESPEasy_time::getNtpTime(double& unixTime_d)
       secsSince1900 |= (unsigned long)packetBuffer[41] << 16;
       secsSince1900 |= (unsigned long)packetBuffer[42] << 8;
       secsSince1900 |= (unsigned long)packetBuffer[43];
+
       if (secsSince1900 == 0) {
         // No time stamp received
 
@@ -344,6 +374,7 @@ bool ESPEasy_time::getNtpTime(double& unixTime_d)
       unixTime_d += (static_cast<double>(txTm_f) / 4294967295.0);
 
       long total_delay = timePassedSince(beginWait);
+      lastSyncTime = millis();
 
       // compensate for the delay by adding half the total delay
       // N.B. unixTime_d is in seconds and delay in msec.
@@ -367,12 +398,14 @@ bool ESPEasy_time::getNtpTime(double& unixTime_d)
         addLog(LOG_LEVEL_INFO, log);
       }
       udp.stop();
-      timeSource = NTP_time_source;
+      timeSource = timeSource_t::NTP_time_source;
+      lastNTPSyncTime = millis();
       CheckRunningServices(); // FIXME TD-er: Sometimes services can only be started after NTP is successful
       return true;
     }
     delay(10);
   }
+
   // Timeout.
   if (!useNTPpool) {
     // Retry again in a minute.
@@ -386,11 +419,9 @@ bool ESPEasy_time::getNtpTime(double& unixTime_d)
   return false;
 }
 
-
 /********************************************************************************************\
    Date/Time string formatters
  \*********************************************************************************************/
-
 String ESPEasy_time::getDateString(char delimiter) const
 {
   return getDateString(tm, delimiter);
@@ -414,7 +445,6 @@ String ESPEasy_time::getTimeString_ampm(char delimiter, bool show_seconds /*=tru
 {
   return getTimeString(tm, delimiter, true, show_seconds);
 }
-
 
 // returns the current Time separated by the given delimiter
 // time format example with ':' delimiter: 23:59:59 (HH:MM:SS)
@@ -468,13 +498,11 @@ String ESPEasy_time::getDateTimeString(const struct tm& ts, char dateDelimiter, 
   return ret;
 }
 
-
 /********************************************************************************************\
    Get current time/date
  \*********************************************************************************************/
-
 int ESPEasy_time::year(unsigned long t)
- {
+{
   struct tm tmp;
 
   breakTime(t, tmp);
@@ -489,25 +517,21 @@ int ESPEasy_time::weekday(unsigned long t)
   return tmp.tm_wday;
 }
 
-String ESPEasy_time::weekday_str(int wday) 
+String ESPEasy_time::weekday_str(int wday)
 {
-	const String weekDays = F("SunMonTueWedThuFriSat");
-	return weekDays.substring(wday * 3, wday * 3 + 3);
+  const String weekDays = F("SunMonTueWedThuFriSat");
+
+  return weekDays.substring(wday * 3, wday * 3 + 3);
 }
 
-String ESPEasy_time::weekday_str() const 
+String ESPEasy_time::weekday_str() const
 {
-	return weekday_str(weekday()-1);
+  return weekday_str(weekday() - 1);
 }
-
-
-
-
 
 /********************************************************************************************\
    Sunrise/Sunset calculations
  \*********************************************************************************************/
-
 int ESPEasy_time::getSecOffset(const String& format) {
   int position_minus = format.indexOf('-');
   int position_plus  = format.indexOf('+');
@@ -538,7 +562,6 @@ int ESPEasy_time::getSecOffset(const String& format) {
   return value;
 }
 
-
 String ESPEasy_time::getSunriseTimeString(char delimiter) const {
   return getTimeString(sunRise, delimiter, false, false);
 }
@@ -560,7 +583,6 @@ String ESPEasy_time::getSunsetTimeString(char delimiter, int secOffset) const {
   }
   return getTimeString(getSunSet(secOffset), delimiter, false, false);
 }
-
 
 float ESPEasy_time::sunDeclination(int doy) {
   // Declination of the sun in radians
@@ -620,7 +642,7 @@ void ESPEasy_time::calcSunRiseAndSet() {
   tsRise = addSeconds(tsRise, secOffset_longitude, false);
 
   breakTime(time_zone.toLocal(makeTime(tsRise)), sunRise);
-  breakTime(time_zone.toLocal(makeTime(tsSet)),  sunSet);
+  breakTime(time_zone.toLocal(makeTime(tsSet)),   sunSet);
 }
 
 struct tm ESPEasy_time::getSunRise(int secOffset) const {
@@ -630,5 +652,3 @@ struct tm ESPEasy_time::getSunRise(int secOffset) const {
 struct tm ESPEasy_time::getSunSet(int secOffset) const {
   return addSeconds(tsSet, secOffset, true);
 }
-
-

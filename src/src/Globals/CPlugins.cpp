@@ -117,14 +117,15 @@ bool CPluginCall(CPlugin::Function Function, struct EventStruct *event, String& 
     case CPlugin::Function::CPLUGIN_WEBFORM_SHOW_HOST_CONFIG:
     {
       controllerIndex_t controllerindex = event->ControllerIndex;
-
-      if (Settings.ControllerEnabled[controllerindex] && supportedCPluginID(Settings.Protocol[controllerindex]))
-      {
-        if (Function == CPlugin::Function::CPLUGIN_PROTOCOL_SEND) {
-          checkDeviceVTypeForTask(event);
+      if (validControllerIndex(controllerindex)) {
+        if (Settings.ControllerEnabled[controllerindex] && supportedCPluginID(Settings.Protocol[controllerindex]))
+        {
+          if (Function == CPlugin::Function::CPLUGIN_PROTOCOL_SEND) {
+            checkDeviceVTypeForTask(event);
+          }
+          protocolIndex_t ProtocolIndex = getProtocolIndex_from_ControllerIndex(controllerindex);
+          CPluginCall(ProtocolIndex, Function, event, str);
         }
-        protocolIndex_t ProtocolIndex = getProtocolIndex_from_ControllerIndex(controllerindex);
-        CPluginCall(ProtocolIndex, Function, event, str);
       }
       break;
     }

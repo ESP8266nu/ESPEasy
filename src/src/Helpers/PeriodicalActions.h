@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include "../../ESPEasy_common.h"
 
+#include "../DataStructs/MessageRouteInfo.h"
 #include "../Globals/CPlugins.h"
 #include "../Helpers/Scheduler.h"
 
@@ -35,6 +36,12 @@ void scheduleNextMQTTdelayQueue();
 void schedule_all_tasks_using_MQTT_controller();
 
 void processMQTTdelayQueue();
+
+bool processMQTT_message(controllerIndex_t controllerIndex,
+                        const String    & topic,
+                        const String    & payload,
+                        bool retained,
+                        const MessageRouteInfo_t* messageRouteInfo);
 
 void updateMQTTclient_connected();
 

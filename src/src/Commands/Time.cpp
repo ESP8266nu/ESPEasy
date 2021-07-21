@@ -68,27 +68,27 @@ String Command_DateTime(struct EventStruct *event, const char *Line)
   String TmpStr1;
 
   if (GetArgv(Line, TmpStr1, 2)) {
-    struct tm tm;
+    struct tm newtime;
     int yr, mnth, d;
     sscanf(TmpStr1.c_str(), "%4d-%2d-%2d", &yr, &mnth, &d);
-    tm.tm_year = yr - 1900;
-    tm.tm_mon  = mnth - 1; // tm_mon starts at 0
-    tm.tm_mday = d;
+    newtime.tm_year = yr - 1900;
+    newtime.tm_mon  = mnth - 1; // tm_mon starts at 0
+    newtime.tm_mday = d;
 
     if (GetArgv(Line, TmpStr1, 3)) {
       int h, m, s;
       sscanf(TmpStr1.c_str(), "%2d:%2d:%2d", &h, &m, &s);
-      tm.tm_hour = h;
-      tm.tm_min  = m;
-      tm.tm_sec  = s;
+      newtime.tm_hour = h;
+      newtime.tm_min  = m;
+      newtime.tm_sec  = s;
     } else {
-      tm.tm_hour = 0;
-      tm.tm_min  = 0;
-      tm.tm_sec  = 0;
+      newtime.tm_hour = 0;
+      newtime.tm_min  = 0;
+      newtime.tm_sec  = 0;
     }
 
-    node_time.sysTime    = makeTime(tm);
-    node_time.timeSource = Manual_set;
+    // Please note the time set in this command is in UTC time, not local time.
+    node_time.setExternalTimeSource(makeTime(newtime), timeSource_t::Manual_set);
   } else  {
     // serialPrintln();
     String result = F("Datetime:");

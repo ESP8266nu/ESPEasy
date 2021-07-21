@@ -45,19 +45,21 @@ else:
 #    "-DUSES_P085",  # AcuDC24x
 #    "-DUSES_P100",  # Pulse Counter - DS2423
 #   "-DUSES_P087",  # Serial Proxy
-#   "-DUSES_P094",  # CUL Reader
+    "-DUSES_P094",  # CUL Reader
 #   "-DUSES_P095",  # TFT ILI9341
 #    "-DUSES_P106",  # BME680
 #    "-DUSES_P107",  # SI1145 UV index
 
-#    "-DUSES_C016",  # Cache Controller
-    "-DUSES_C018",  # TTN/RN2483
 #   "-DUSES_C015",  # Blynk
+#   "-DUSES_C016",  # Cache Controller
+    "-DUSES_C018",  # TTN/RN2483
+    "-DUSES_C019",  # ESPEasy-NOW
 
 #    "-DFEATURE_MDNS",
 #    "-DFEATURE_SD",
     "-DFEATURE_I2CMULTIPLEXER",
     "-DUSE_TRIGONOMETRIC_FUNCTIONS_RULES",
+    "-DUSE_CUSTOM_PROVISIONING",
 
     "-DUSE_SETTINGS_ARCHIVE"
   ]

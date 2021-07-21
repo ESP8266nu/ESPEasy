@@ -4,7 +4,7 @@
 
 #include "../../ESPEasy_common.h"
 #include "../CustomBuild/ESPEasyLimits.h"
-#include "../DataStructs/UnitMessageCount.h"
+#include "../DataStructs/MessageRouteInfo.h"
 #include "../Globals/CPlugins.h"
 #include "../Globals/Plugins.h"
 
@@ -35,7 +35,7 @@ public:
 
   bool                             isDuplicate(const queue_element_single_value_base& other) const;
 
-  const UnitMessageCount_t       * getUnitMessageCount() const {
+  const MessageRouteInfo_t       * getMessageRouteInfo() const {
     return nullptr;
   }
 

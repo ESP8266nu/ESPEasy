@@ -5,8 +5,8 @@
 
 int      calc_CRC16(const String& text);
 
-int      calc_CRC16(const char *ptr,
-                    int         count);
+int ICACHE_FLASH_ATTR calc_CRC16(const char *ptr,
+                                 int         count);
 
 uint32_t calc_CRC32(const uint8_t *data,
                     size_t         length);

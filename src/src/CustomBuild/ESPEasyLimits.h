@@ -1,5 +1,5 @@
-#ifndef DATASTRUCTS_ESPEASY_LIMITS_H
-#define DATASTRUCTS_ESPEASY_LIMITS_H
+#ifndef CUSTOMBUILD_ESPEASY_LIMITS_H
+#define CUSTOMBUILD_ESPEASY_LIMITS_H
 
 #include "../../ESPEasy_common.h"
 
@@ -60,6 +60,16 @@
 #endif
 #ifndef NAME_FORMULA_LENGTH_MAX
   #define NAME_FORMULA_LENGTH_MAX            40
+#endif
+
+
+
+// ***********************************************************************
+// * ESPEasy-NOW related limits
+// ***********************************************************************
+
+#ifndef ESPEASY_NOW_PEER_MAX
+  #define ESPEASY_NOW_PEER_MAX                10 // 10 when using encryption, 20 without encryption
 #endif
 
 
@@ -153,4 +163,4 @@
 #define DOMOTICZ_MAX_IDX            999999999 // Looks like it is an unsigned int, so could be up to 4 bln.
 
 
-#endif // DATASTRUCTS_ESPEASY_LIMITS_H
+#endif // CUSTOMBUILD_ESPEASY_LIMITS_H

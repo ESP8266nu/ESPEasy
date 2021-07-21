@@ -4,6 +4,7 @@
 #include "../DataStructs/NotificationSettingsStruct.h"
 #include "../DataStructs/SecurityStruct.h"
 #include "../DataStructs/ControllerSettingsStruct.h"
+#include "../DataTypes/ESPEasyFileType.h"
 
 #include "../Globals/ExtraTaskSettings.h"
 #include "../Globals/Settings.h"
@@ -206,9 +207,9 @@ String SettingsType::getSettingsFileName(Enum settingsType) {
 
 String SettingsType::getSettingsFileName(SettingsType::SettingsFileEnum file_type) {
   switch (file_type) {
-    case SettingsFileEnum::FILE_CONFIG_type:        return F(FILE_CONFIG);
-    case SettingsFileEnum::FILE_NOTIFICATION_type:  return F(FILE_NOTIFICATION);
-    case SettingsFileEnum::FILE_SECURITY_type:      return F(FILE_SECURITY);
+    case SettingsFileEnum::FILE_CONFIG_type:        return getFileName(FileType::CONFIG_DAT);
+    case SettingsFileEnum::FILE_NOTIFICATION_type:  return getFileName(FileType::NOTIFICATION_DAT);
+    case SettingsFileEnum::FILE_SECURITY_type:      return getFileName(FileType::SECURITY_DAT);
     case SettingsFileEnum::FILE_UNKNOWN_type:       break;
   }
   return "";
@@ -217,7 +218,8 @@ String SettingsType::getSettingsFileName(SettingsType::SettingsFileEnum file_typ
 size_t SettingsType::getInitFileSize(SettingsType::SettingsFileEnum file_type) {
   switch (file_type) {
     case SettingsFileEnum::FILE_CONFIG_type:        return CONFIG_FILE_SIZE;
-    case SettingsFileEnum::FILE_NOTIFICATION_type:  return 4096;
+    case SettingsFileEnum::FILE_NOTIFICATION_type:
+      // fall through
     case SettingsFileEnum::FILE_SECURITY_type:      return 4096;
     case SettingsFileEnum::FILE_UNKNOWN_type:       break;
   }

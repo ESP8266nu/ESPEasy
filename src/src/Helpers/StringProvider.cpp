@@ -5,6 +5,7 @@
 #endif // ifdef HAS_ETHERNET
 
 #include "../../ESPEasy-Globals.h"
+#include "../../ESPEasy_common.h"
 
 #include "../ESPEasyCore/ESPEasyNetwork.h"
 #include "../ESPEasyCore/ESPEasyWifi.h"
@@ -14,6 +15,7 @@
 
 #include "../Globals/ESPEasy_Scheduler.h"
 #include "../Globals/ESPEasy_time.h"
+#include "../Globals/ESPEasy_now_state.h"
 #include "../Globals/ESPEasyWiFiEvent.h"
 #include "../Globals/NetworkState.h"
 #include "../Globals/SecuritySettings.h"
@@ -43,6 +45,7 @@ const __FlashStringHelper * getLabel(LabelType::Enum label) {
     case LabelType::HOST_NAME:              return F("Hostname");
 
     case LabelType::LOCAL_TIME:             return F("Local Time");
+    case LabelType::TIME_SOURCE:            return F("Time Source");
     case LabelType::UPTIME:                 return F("Uptime");
     case LabelType::LOAD_PCT:               return F("Load");
     case LabelType::LOOP_COUNT:             return F("Load LC");
@@ -124,6 +127,13 @@ const __FlashStringHelper * getLabel(LabelType::Enum label) {
     case LabelType::FORCE_WIFI_NOSLEEP:     return F("Force WiFi No Sleep");
     case LabelType::PERIODICAL_GRAT_ARP:    return F("Periodical send Gratuitous ARP");
     case LabelType::CONNECTION_FAIL_THRESH: return F("Connection Failure Threshold");
+
+    #ifdef USES_ESPEASY_NOW
+    case LabelType::USE_ESPEASY_NOW:        return F("Enable " ESPEASY_NOW_NAME);
+    case LabelType::TEMP_DISABLE_ESPEASY_NOW: return F("Temporary disable " ESPEASY_NOW_NAME);
+    case LabelType::FORCE_ESPEASY_NOW_CHANNEL: return F("Force Channel " ESPEASY_NOW_NAME);
+    #endif
+
 
     case LabelType::BUILD_DESC:             return F("Build");
     case LabelType::GIT_BUILD:              return F("Git Build");
@@ -210,6 +220,7 @@ String getValue(LabelType::Enum label) {
 
 
     case LabelType::LOCAL_TIME:             return node_time.getDateTimeString('-', ':', ' ');
+    case LabelType::TIME_SOURCE:            return toString(node_time.timeSource);
     case LabelType::UPTIME:                 return String(getUptimeMinutes());
     case LabelType::LOAD_PCT:               return String(getCPUload());
     case LabelType::LOOP_COUNT:             return String(getLoopCountPerSec());
@@ -297,6 +308,12 @@ String getValue(LabelType::Enum label) {
     case LabelType::FORCE_WIFI_NOSLEEP:     return jsonBool(Settings.WifiNoneSleep());
     case LabelType::PERIODICAL_GRAT_ARP:    return jsonBool(Settings.gratuitousARP());
     case LabelType::CONNECTION_FAIL_THRESH: return String(Settings.ConnectionFailuresThreshold);
+
+    #ifdef USES_ESPEASY_NOW
+    case LabelType::USE_ESPEASY_NOW:        return jsonBool(Settings.UseESPEasyNow());
+    case LabelType::TEMP_DISABLE_ESPEASY_NOW: return jsonBool(temp_disable_EspEasy_now_timer != 0);
+    case LabelType::FORCE_ESPEASY_NOW_CHANNEL: return String(Settings.ForceESPEasyNOWchannel);
+    #endif
 
     case LabelType::BUILD_DESC:             return String(BUILD);
     case LabelType::GIT_BUILD:              
@@ -429,42 +446,3 @@ String getExtendedValue(LabelType::Enum label) {
   return "";
 }
 
-String getFileName(FileType::Enum filetype) {
-  String result;
-
-  switch (filetype)
-  {
-    case FileType::CONFIG_DAT:
-      result += F("config.dat");
-      break;
-    case FileType::NOTIFICATION_DAT:
-      result += F("notification.dat");
-      break;
-    case FileType::SECURITY_DAT:
-      result += F("security.dat");
-      break;
-    case FileType::RULES_TXT:
-      // Use getRulesFileName
-      break;
-  }
-  return result;
-}
-
-String getFileName(FileType::Enum filetype, unsigned int filenr) {
-  if (filetype == FileType::RULES_TXT) {
-    return getRulesFileName(filenr);
-  }
-  return getFileName(filetype);
-}
-
-// filenr = 0...3 for files rules1.txt ... rules4.txt
-String getRulesFileName(unsigned int filenr) {
-  String result;
-
-  if (filenr < 4) {
-    result += F("rules");
-    result += filenr + 1;
-    result += F(".txt");
-  }
-  return result;
-}

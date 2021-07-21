@@ -107,10 +107,6 @@ bool CPlugin_006(CPlugin::Function function, struct EventStruct *event, String& 
 
     case CPlugin::Function::CPLUGIN_PROTOCOL_SEND:
     {
-      if (!NetworkConnected(10)) {
-        success = false;
-        break;
-      }
       String pubname         = CPlugin_006_pubname;
       bool   mqtt_retainFlag = CPlugin_006_mqtt_retainFlag;
 

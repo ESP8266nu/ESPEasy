@@ -1,8 +1,6 @@
 #include "ESPEasyControllerCache.h"
 
 
-ControllerCache_struct::ControllerCache_struct() {}
-
 ControllerCache_struct::~ControllerCache_struct() {
   if (_RTC_cache_handler != nullptr) {
     delete _RTC_cache_handler;

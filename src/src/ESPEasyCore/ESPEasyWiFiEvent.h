@@ -60,6 +60,8 @@ void onConnectedAPmode(const WiFiEventSoftAPModeStationConnected& event);
 
 void onDisconnectedAPmode(const WiFiEventSoftAPModeStationDisconnected& event);
 
+void onProbeRequestAPmode(const WiFiEventSoftAPModeProbeRequestReceived& event);
+
 void onStationModeAuthModeChanged(const WiFiEventStationModeAuthModeChanged& event);
 
 void onWiFiScanDone(void *arg, STATUS status);

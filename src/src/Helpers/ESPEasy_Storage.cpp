@@ -6,6 +6,8 @@
 
 #include "../DataStructs/TimingStats.h"
 
+#include "../DataTypes/ESPEasyFileType.h"
+
 #include "../ESPEasyCore/ESPEasy_Log.h"
 #include "../ESPEasyCore/ESPEasyNetwork.h"
 #include "../ESPEasyCore/ESPEasyWifi.h"
@@ -31,9 +33,11 @@
 #include "../Helpers/Hardware.h"
 #include "../Helpers/Memory.h"
 #include "../Helpers/Misc.h"
+#include "../Helpers/Networking.h"
 #include "../Helpers/Numerical.h"
 #include "../Helpers/PeriodicalActions.h"
 #include "../Helpers/StringConverter.h"
+#include "../Helpers/StringParser.h"
 
 #include "ESPEasy_checks.h"
 
@@ -427,7 +431,7 @@ String SaveSecuritySettings() {
   if (memcmp(tmp_md5, SecuritySettings.md5, 16) != 0) {
     // Settings have changed, save to file.
     memcpy(SecuritySettings.md5, tmp_md5, 16);
-    err = SaveToFile((char *)FILE_SECURITY, 0, (uint8_t *)&SecuritySettings, sizeof(SecuritySettings));
+    err = SaveToFile(getFileName(FileType::SECURITY_DAT).c_str(), 0, (uint8_t *)&SecuritySettings, sizeof(SecuritySettings));
 
     if (WifiIsAP(WiFi.getMode())) {
       // Security settings are saved, may be update of WiFi settings or hostname.
@@ -442,14 +446,28 @@ String SaveSecuritySettings() {
 
 void afterloadSettings() {
   ExtraTaskSettings.clear(); // make sure these will not contain old settings.
-  ResetFactoryDefaultPreference_struct pref(Settings.ResetFactoryDefaultPreference);
-  DeviceModel model = pref.getDeviceModel();
+
+  // Load ResetFactoryDefaultPreference from provisioning.dat if available.
+  uint32_t pref_temp = Settings.ResetFactoryDefaultPreference;
+  #ifdef USE_CUSTOM_PROVISIONING
+  if (fileExists(getFileName(FileType::PROVISIONING_DAT))) {
+    MakeProvisioningSettings(ProvisioningSettings);
+    if (AllocatedProvisioningSettings()) {
+      loadProvisioningSettings(ProvisioningSettings);
+      if (ProvisioningSettings.matchingFlashSize()) {
+        pref_temp = ProvisioningSettings.ResetFactoryDefaultPreference.getPreference();
+      }
+    }
+  }
+  #endif
 
   // TODO TD-er: Try to get the information from more locations to make it more persistent
   // Maybe EEPROM location?
 
-  if (modelMatchingFlashSize(model)) {
-    ResetFactoryDefaultPreference = Settings.ResetFactoryDefaultPreference;
+
+  ResetFactoryDefaultPreference_struct pref(pref_temp);
+  if (modelMatchingFlashSize(pref.getDeviceModel())) {
+    ResetFactoryDefaultPreference = pref_temp;
   }
   Scheduler.setEcoMode(Settings.EcoPowerMode());
 
@@ -497,7 +515,7 @@ String LoadSettings()
      }
    */
 
-  err = LoadFromFile((char *)FILE_SECURITY, 0, (uint8_t *)&SecuritySettings, sizeof(SecurityStruct));
+  err = LoadFromFile(getFileName(FileType::SECURITY_DAT).c_str(), 0, (uint8_t *)&SecuritySettings, sizeof(SecurityStruct));
   md5.begin();
   md5.add((uint8_t *)&SecuritySettings, sizeof(SecuritySettings) - 16);
   md5.calculate();
@@ -522,6 +540,8 @@ String LoadSettings()
   SecuritySettings.validate();
   return err;
 }
+
+
 
 /********************************************************************************************\
    Disable Plugin, based on bootFailedCount
@@ -955,6 +975,62 @@ String LoadCustomControllerSettings(controllerIndex_t ControllerIndex, uint8_t *
   return LoadFromFile(SettingsType::Enum::CustomControllerSettings_Type, ControllerIndex, memAddress, datasize);
 }
 
+
+#ifdef USE_CUSTOM_PROVISIONING
+/********************************************************************************************\
+   Save Provisioning Settings
+ \*********************************************************************************************/
+String saveProvisioningSettings(ProvisioningStruct& ProvisioningSettings)
+{
+  MD5Builder md5;
+  uint8_t    tmp_md5[16] = { 0 };
+  String     err;
+
+  ProvisioningSettings.validate();
+  memcpy(ProvisioningSettings.ProgmemMd5, CRCValues.runTimeMD5, 16);
+  md5.begin();
+  md5.add((uint8_t *)&ProvisioningSettings + 16, sizeof(ProvisioningSettings) - 16);
+  md5.calculate();
+  md5.getBytes(tmp_md5);
+
+  if (memcmp(tmp_md5, ProvisioningSettings.md5, 16) != 0) {
+    // Settings have changed, save to file.
+    memcpy(ProvisioningSettings.md5, tmp_md5, 16);
+    err = SaveToFile_trunc(getFileName(FileType::PROVISIONING_DAT).c_str(), 0, (uint8_t *)&ProvisioningSettings, sizeof(ProvisioningStruct));
+  }
+  return err;
+}
+
+/********************************************************************************************\
+   Load Provisioning Settings
+ \*********************************************************************************************/
+String loadProvisioningSettings(ProvisioningStruct& ProvisioningSettings)
+{
+  uint8_t calculatedMd5[16] = { 0 };
+  MD5Builder md5;
+
+  String err = LoadFromFile(getFileName(FileType::PROVISIONING_DAT).c_str(), 0, (uint8_t *)&ProvisioningSettings, sizeof(ProvisioningStruct));
+  md5.begin();
+  md5.add(((uint8_t *)&ProvisioningSettings) + 16, sizeof(ProvisioningSettings) - 16);
+  md5.calculate();
+  md5.getBytes(calculatedMd5);
+
+  if (memcmp(calculatedMd5, ProvisioningSettings.md5, 16) == 0) {
+    addLog(LOG_LEVEL_INFO, F("CRC  : ProvisioningSettings CRC   ...OK "));
+
+    if (memcmp(ProvisioningSettings.ProgmemMd5, CRCValues.runTimeMD5, 16) != 0) {
+      addLog(LOG_LEVEL_INFO, F("CRC  : binary has changed since last save of Settings"));
+    }
+  }
+  else {
+    addLog(LOG_LEVEL_ERROR, F("CRC  : ProvisioningSettings CRC   ...FAIL"));
+  }
+  ProvisioningSettings.validate();
+  return err;
+}
+
+#endif
+
 /********************************************************************************************\
    Save Controller settings to file system
  \*********************************************************************************************/
@@ -1020,6 +1096,11 @@ String InitFile(SettingsType::SettingsFileEnum file_type)
 String SaveToFile(const char *fname, int index, const uint8_t *memAddress, int datasize)
 {
   return doSaveToFile(fname, index, memAddress, datasize, "r+");
+}
+
+String SaveToFile_trunc(const char *fname, int index, const uint8_t *memAddress, int datasize)
+{
+  return doSaveToFile(fname, index, memAddress, datasize, "w+");
 }
 
 // See for mode description: https://github.com/esp8266/Arduino/blob/master/doc/filesystem.rst
@@ -1577,3 +1658,107 @@ String getPartitionTable(uint8_t pType, const String& itemSep, const String& lin
 }
 
 #endif // ifdef ESP32
+
+#ifdef USE_DOWNLOAD
+String downloadFileType(const String& url, const String& user, const String& pass, FileType::Enum filetype, unsigned int filenr)
+{
+  if (!getDownloadFiletypeChecked(filetype, filenr)) {
+    // Not selected, so not downloaded
+    return F("Not Allowed");
+  }
+
+  String filename = getFileName(filetype, filenr);
+  String fullUrl;
+
+  fullUrl.reserve(url.length() + filename.length() + 1); // May need to add an extra slash
+  fullUrl = url;
+  fullUrl = parseTemplate(fullUrl, true);                // URL encode
+
+  // URLEncode may also encode the '/' into "%2f"
+  // FIXME TD-er: Can this really occur?
+  fullUrl.replace(F("%2f"), F("/"));
+
+  while (filename.startsWith(F("/"))) {
+    filename = filename.substring(1);
+  }
+
+  if (!fullUrl.endsWith(F("/"))) {
+    fullUrl += F("/");
+  }
+  fullUrl += filename;
+
+  String error;
+
+  if (ResetFactoryDefaultPreference.deleteFirst()) {
+    if (fileExists(filename) && !tryDeleteFile(filename)) {
+      return F("Could not delete existing file");
+    }
+
+    if (!downloadFile(fullUrl, filename, user, pass, error)) {
+      return error;
+    }
+  } else {
+    if (fileExists(filename)) {
+      String filename_bak = filename;
+      filename_bak += F("_bak");
+      if (fileExists(filename_bak)) {
+        return F("Could not rename to _bak");
+      }
+
+      // Must download it to a tmp file.
+      String tmpfile = filename;
+      tmpfile += F("_tmp");
+
+      if (!downloadFile(fullUrl, tmpfile, user, pass, error)) {
+        return error;
+      }
+
+      if (fileExists(filename) && !tryRenameFile(filename, filename_bak)) {
+        return F("Could not rename to _bak");
+      } else {
+        // File does not exist (anymore)
+        if (!tryRenameFile(tmpfile, filename)) {
+          error = F("Could not rename tmp file");
+
+          if (tryRenameFile(filename_bak, filename)) {
+            error += F("... reverted");
+          } else {
+            error += F(" Not reverted!");
+          }
+          return error;
+        }
+      }
+    } else {
+      if (!downloadFile(fullUrl, filename, user, pass, error)) {
+        return error;
+      }
+    }
+  }
+  return error;
+}
+
+#endif // ifdef USE_DOWNLOAD
+
+#ifdef USE_CUSTOM_PROVISIONING
+
+String downloadFileType(FileType::Enum filetype, unsigned int filenr)
+{
+  if (!ResetFactoryDefaultPreference.allowFetchByCommand()) {
+    return F("Not Allowed");
+  }
+  String url, user, pass;
+
+  {
+    MakeProvisioningSettings(ProvisioningSettings);
+
+    if (AllocatedProvisioningSettings()) {
+      loadProvisioningSettings(ProvisioningSettings);
+      url  = ProvisioningSettings.url;
+      user = ProvisioningSettings.user;
+      pass = ProvisioningSettings.pass;
+    }
+  }
+  return downloadFileType(url, user, pass, filetype, filenr);
+}
+
+#endif // ifdef USE_CUSTOM_PROVISIONING

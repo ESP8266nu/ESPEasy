@@ -3,7 +3,7 @@
 
 #include "../../ESPEasy_common.h"
 #include "../CustomBuild/ESPEasyLimits.h"
-#include "../DataStructs/UnitMessageCount.h"
+#include "../DataStructs/MessageRouteInfo.h"
 #include "../Globals/CPlugins.h"
 
 
@@ -32,7 +32,7 @@ public:
 
   bool isDuplicate(const C018_queue_element& other) const;
 
-  const UnitMessageCount_t* getUnitMessageCount() const { return nullptr; }
+  const MessageRouteInfo_t* getMessageRouteInfo() const { return nullptr; }
 
   String packed;
   unsigned long _timestamp         = millis();

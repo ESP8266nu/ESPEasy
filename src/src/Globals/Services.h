@@ -25,10 +25,10 @@
 
   #include <ESP8266WiFi.h>
   #include <ESP8266WebServer.h>
-  #include <ESP8266HTTPUpdateServer.h>
 
   extern ESP8266WebServer web_server;
   #ifndef NO_HTTP_UPDATER
+  #include <ESP8266HTTPUpdateServer.h>
   extern ESP8266HTTPUpdateServer httpUpdater;
   #endif
 
@@ -40,10 +40,10 @@
 
   #include <WiFi.h>
   #include <WebServer.h>
-  #include <ESP32HTTPUpdateServer.h>
   
   extern WebServer web_server;
   #ifndef NO_HTTP_UPDATER
+  #include <ESP32HTTPUpdateServer.h>
   extern ESP32HTTPUpdateServer httpUpdater;
   #endif
 

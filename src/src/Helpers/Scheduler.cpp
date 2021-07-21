@@ -498,11 +498,9 @@ void ESPEasy_Scheduler::process_interval_timer(IntervalTimer_e id, unsigned long
       break;
 
     case IntervalTimer_e::TIMER_C019_DELAY_QUEUE:
-      /*
-       #ifdef USES_C019
-            process_c019_delay_queue();
-       #endif
-       */
+  #ifdef USES_C019
+      process_c019_delay_queue();
+  #endif
       break;
 
     case IntervalTimer_e::TIMER_C020_DELAY_QUEUE:

@@ -130,6 +130,7 @@ private:
   uint16_t       max_length               = 550;
   uint32_t       sentences_received       = 0;
   uint32_t       sentences_received_error = 0;
+  bool           current_sentence_errored = false;
   uint32_t       length_last_received     = 0;
   unsigned long  disable_filter_window    = 0;
   uint32_t       debug_counter            = 0;

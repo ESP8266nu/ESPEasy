@@ -156,6 +156,7 @@ void handle_json()
         LabelType::PLUGIN_COUNT,
         LabelType::PLUGIN_DESCRIPTION,
         LabelType::LOCAL_TIME,
+        LabelType::TIME_SOURCE,
         LabelType::ISNTP,
         LabelType::UNIT_NR,
         LabelType::UNIT_NAME,
@@ -217,6 +218,10 @@ void handle_json()
 #ifdef SUPPORT_ARP
         LabelType::PERIODICAL_GRAT_ARP,
 #endif // ifdef SUPPORT_ARP
+#ifdef USES_ESPEASY_NOW
+        LabelType::USE_ESPEASY_NOW,
+        LabelType::FORCE_ESPEASY_NOW_CHANNEL,
+#endif
         LabelType::CONNECTION_FAIL_THRESH,
         LabelType::WIFI_TX_MAX_PWR,
         LabelType::WIFI_CUR_TX_PWR,
@@ -262,7 +267,7 @@ void handle_json()
     if (showNodes) {
       bool comma_between = false;
 
-      for (NodesMap::iterator it = Nodes.begin(); it != Nodes.end(); ++it)
+      for (auto it = Nodes.begin(); it != Nodes.end(); ++it)
       {
         if (it->second.ip[0] != 0)
         {
@@ -276,21 +281,21 @@ void handle_json()
           addHtml('{');
           stream_next_json_object_value(F("nr"), String(it->first));
           stream_next_json_object_value(F("name"),
-                                        (it->first != Settings.Unit) ? it->second.nodeName : Settings.Name);
+                                        (it->first != Settings.Unit) ? it->second.getNodeName() : Settings.Name);
 
           if (it->second.build) {
             stream_next_json_object_value(F("build"), String(it->second.build));
           }
 
           if (it->second.nodeType) {
-            String platform = getNodeTypeDisplayString(it->second.nodeType);
-
-            if (platform.length() > 0) {
-              stream_next_json_object_value(F("platform"), platform);
-            }
+            stream_next_json_object_value(F("platform"), it->second.getNodeTypeDisplayString());
           }
-          stream_next_json_object_value(F("ip"), it->second.ip.toString());
-          stream_last_json_object_value(F("age"), String(it->second.age));
+          const int8_t rssi = it->second.getRSSI();
+          if (rssi < 0) {
+            stream_next_json_object_value(F("rssi"), String(rssi));
+          }
+          stream_next_json_object_value(F("ip"), it->second.IP().toString());
+          stream_last_json_object_value(F("age"), String(it->second.getAge() / 1000)); // time in seconds
         } // if node info exists
       }   // for loop
 
@@ -468,7 +473,7 @@ void handle_nodes_list_json() {
   json_init();
   json_open(true);
 
-  for (NodesMap::iterator it = Nodes.begin(); it != Nodes.end(); ++it)
+  for (auto it = Nodes.begin(); it != Nodes.end(); ++it)
   {
     if (it->second.ip[0] != 0)
     {
@@ -480,12 +485,12 @@ void handle_nodes_list_json() {
       }
 
       json_number(F("first"), String(it->first));
-      json_prop(F("name"), isThisUnit ? Settings.Name : it->second.nodeName);
+      json_prop(F("name"), isThisUnit ? Settings.Name : it->second.getNodeName());
 
       if (it->second.build) { json_prop(F("build"), String(it->second.build)); }
-      json_prop(F("type"), getNodeTypeDisplayString(it->second.nodeType));
+      json_prop(F("type"), it->second.getNodeTypeDisplayString());
       json_prop(F("ip"),   it->second.ip.toString());
-      json_number(F("age"), String(it->second.age));
+      json_number(F("age"), String(it->second.getAge() / 1000)); // time in seconds
       json_close();
     }
   }

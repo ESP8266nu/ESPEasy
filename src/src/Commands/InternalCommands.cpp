@@ -13,6 +13,7 @@
 #include "../Commands/Common.h"
 #include "../Commands/Controller.h"
 #include "../Commands/Diagnostic.h"
+#include "../Commands/ESPEasy_Now_cmd.h"
 #include "../Commands/GPIO.h"
 #include "../Commands/HTTP.h"
 #include "../Commands/i2c.h"
@@ -23,6 +24,7 @@
 
 #include "../Commands/Networks.h"
 #include "../Commands/Notifications.h"
+#include "../Commands/Provisioning.h"
 #include "../Commands/RTC.h"
 #include "../Commands/Rules.h"
 #include "../Commands/SDCARD.h"
@@ -298,6 +300,10 @@ bool executeInternalCommand(command_case_data & data)
       COMMAND_CASE_R(      "ethdns", Command_ETH_DNS,        1); // Network Command
       COMMAND_CASE_R( "ethwifimode", Command_ETH_Wifi_Mode,  1); // Network Command
     #endif // HAS_ETHERNET
+#ifdef USES_ESPEASY_NOW
+      COMMAND_CASE_R("espeasynowdisable", Command_ESPEasy_Now_Disable, 0); // ESPEasy_Now_cmd.h
+      COMMAND_CASE_R( "espeasynowenable", Command_ESPEasy_Now_Enable,  0); // ESPEasy_Now_cmd.h
+#endif
       COMMAND_CASE_R("erasesdkwifi", Command_WiFi_Erase,     0); // WiFi.h
       COMMAND_CASE_A(       "event", Command_Rules_Events,  -1); // Rule.h
       COMMAND_CASE_A("executerules", Command_Rules_Execute, -1); // Rule.h
@@ -380,6 +386,13 @@ bool executeInternalCommand(command_case_data & data)
         COMMAND_CASE_A(       "pcfpulse", Command_GPIO_Pulse,           3); // GPIO.h
       }
       COMMAND_CASE_R("password", Command_Settings_Password, 1); // Settings.h
+#ifdef USE_CUSTOM_PROVISIONING
+      COMMAND_CASE_A(       "provisionconfig", Command_Provisioning_Config,       0); // Provisioning.h
+      COMMAND_CASE_A(     "provisionsecurity", Command_Provisioning_Security,     0); // Provisioning.h
+      COMMAND_CASE_A( "provisionnotification", Command_Provisioning_Notification, 0); // Provisioning.h
+      COMMAND_CASE_A(    "provisionprovision", Command_Provisioning_Provision,    0); // Provisioning.h
+      COMMAND_CASE_A(        "provisionrules", Command_Provisioning_Rules,        1); // Provisioning.h
+#endif
       COMMAND_CASE_A(   "pulse", Command_GPIO_Pulse,        3); // GPIO.h
 #ifdef USES_MQTT
       COMMAND_CASE_A( "publish", Command_MQTT_Publish,      2); // MQTT.h

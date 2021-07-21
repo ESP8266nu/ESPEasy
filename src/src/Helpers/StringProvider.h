@@ -17,6 +17,7 @@ struct LabelType {
     HOST_NAME,
 
     LOCAL_TIME,
+    TIME_SOURCE,
     UPTIME,
     LOAD_PCT,            // 15.10
     LOOP_COUNT,          // 400
@@ -95,6 +96,12 @@ struct LabelType {
     FORCE_WIFI_NOSLEEP,
     PERIODICAL_GRAT_ARP,
     CONNECTION_FAIL_THRESH,
+
+    #ifdef USES_ESPEASY_NOW
+    USE_ESPEASY_NOW,
+    TEMP_DISABLE_ESPEASY_NOW,
+    FORCE_ESPEASY_NOW_CHANNEL,
+    #endif
 
     BUILD_DESC,
     GIT_BUILD,
@@ -179,31 +186,9 @@ String getValue(LabelType::Enum label);
 String getExtendedValue(LabelType::Enum label);
 
 
-struct FileType {
-  enum Enum : short {
-    CONFIG_DAT,
-    SECURITY_DAT,
-    RULES_TXT,
-    NOTIFICATION_DAT
-  };
-};
 
 
-String getFileName(FileType::Enum filetype);
-String getFileName(FileType::Enum filetype,
-                   unsigned int   filenr);
 
-// filenr = 0...3 for files rules1.txt ... rules4.txt
-String getRulesFileName(unsigned int filenr);
-void   addDownloadFiletypeCheckbox(FileType::Enum filetype,
-                                   unsigned int   filenr = 0);
-void   storeDownloadFiletypeCheckbox(FileType::Enum filetype,
-                                     unsigned int   filenr = 0);
-bool   tryDownloadFileType(const String & url,
-                           const String & user,
-                           const String & pass,
-                           FileType::Enum filetype,
-                           unsigned int   filenr = 0);
 
 
 #endif // STRING_PROVIDER_TYPES_H

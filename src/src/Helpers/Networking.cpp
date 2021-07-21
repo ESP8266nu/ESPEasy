@@ -9,9 +9,11 @@
 #include "../ESPEasyCore/ESPEasyWifi.h"
 #include "../Globals/ESPEasyWiFiEvent.h"
 #include "../Globals/ESPEasy_Scheduler.h"
+#include "../Globals/ESPEasy_now_handler.h"
 #include "../Globals/NetworkState.h"
 #include "../Globals/Nodes.h"
 #include "../Globals/Settings.h"
+#include "../Globals/WiFi_AP_Candidates.h"
 #include "../Helpers/ESPEasy_Storage.h"
 #include "../Helpers/ESPEasy_time_calc.h"
 #include "../Helpers/Misc.h"
@@ -55,14 +57,14 @@ void etharp_gratuitous_r(struct netif *netif) {
 
 #endif  // ifdef SUPPORT_ARP
 
-#ifdef USE_SETTINGS_ARCHIVE
+#ifdef USE_DOWNLOAD
 # ifdef ESP8266
 #  include <ESP8266HTTPClient.h>
 # endif // ifdef ESP8266
 # ifdef ESP32
 #  include "HTTPClient.h"
 # endif // ifdef ESP32
-#endif  // USE_SETTINGS_ARCHIVE
+#endif
 
 
 /*********************************************************************************************\
@@ -237,58 +239,32 @@ void checkUDP()
                 if (len < 13) {
                   break;
                 }
-                uint8_t unit = packetBuffer[12];
-#ifndef BUILD_NO_DEBUG
-                MAC_address mac;
-                uint8_t ip[4];
+                int copy_length = sizeof(NodeStruct);
 
-                for (uint8_t x = 0; x < 6; x++) {
-                  mac.mac[x] = packetBuffer[x + 2];
+                if (copy_length > len) {
+                  copy_length = len;
                 }
+                NodeStruct received;
+                memcpy(&received, &packetBuffer[2], copy_length);
 
-                for (uint8_t x = 0; x < 4; x++) {
-                  ip[x] = packetBuffer[x + 8];
-                }
-#endif // ifndef BUILD_NO_DEBUG
-                Nodes[unit].age = 0; // Create a new element when not present
-                NodesMap::iterator it = Nodes.find(unit);
-
-                if (it != Nodes.end()) {
-                  for (uint8_t x = 0; x < 4; x++) {
-                    it->second.ip[x] = packetBuffer[x + 8];
-                  }
-                  it->second.age = 0; // reset 'age counter'
-
-                  if (len >= 41)      // extended packet size
-                  {
-                    it->second.build = makeWord(packetBuffer[14], packetBuffer[13]);
-                    char tmpNodeName[26] = { 0 };
-                    memcpy(&tmpNodeName[0], reinterpret_cast<uint8_t *>(&packetBuffer[15]), 25);
-                    tmpNodeName[25]     = 0;
-                    it->second.nodeName = tmpNodeName;
-                    it->second.nodeName.trim();
-                    it->second.nodeType          = packetBuffer[40];
-                    it->second.webgui_portnumber = 80;
-
-                    if ((len >= 43) && (it->second.build >= 20107)) {
-                      it->second.webgui_portnumber = makeWord(packetBuffer[42], packetBuffer[41]);
-                    }
-                  }
-                }
+                if (received.validate()) {
+                  Nodes.addNode(received); // Create a new element when not present
 
 #ifndef BUILD_NO_DEBUG
 
-                if (loglevelActiveFor(LOG_LEVEL_DEBUG_MORE)) {
-                  String log;
-                  log += F("UDP  : ");
-                  log += mac.toString();
-                  log += ',';
-                  log += formatIP(ip);
-                  log += ',';
-                  log += unit;
-                  addLog(LOG_LEVEL_DEBUG_MORE, log);
-                }
+                  if (loglevelActiveFor(LOG_LEVEL_DEBUG_MORE)) {
+                    String log;
+                    log.reserve(64);
+                    log  = F("UDP  : ");
+                    log += received.STA_MAC().toString();
+                    log += ',';
+                    log += received.IP().toString();
+                    log += ',';
+                    log += received.unit;
+                    addLog(LOG_LEVEL_DEBUG_MORE, log);
+                  }
 #endif // ifndef BUILD_NO_DEBUG
+                }
                 break;
               }
 
@@ -332,7 +308,7 @@ void SendUDPCommand(uint8_t destUnit, const char *data, uint8_t dataLength)
     sendUDP(destUnit, (const uint8_t *)data, dataLength);
     delay(10);
   } else {
-    for (NodesMap::iterator it = Nodes.begin(); it != Nodes.end(); ++it) {
+    for (auto it = Nodes.begin(); it != Nodes.end(); ++it) {
       if (it->first != Settings.Unit) {
         sendUDP(it->first, (const uint8_t *)data, dataLength);
         delay(10);
@@ -374,7 +350,7 @@ IPAddress getIPAddressForUnit(uint8_t unit) {
     remoteNodeIP = { 255, 255, 255, 255 };
   }
   else {
-    NodesMap::iterator it = Nodes.find(unit);
+    auto it = Nodes.find(unit);
 
     if (it == Nodes.end()) {
       return remoteNodeIP;
@@ -426,32 +402,34 @@ void sendUDP(uint8_t unit, const uint8_t *data, uint8_t size)
 \*********************************************************************************************/
 void refreshNodeList()
 {
-  bool mustSendGratuitousARP = false;
+  unsigned long max_age;
+  const unsigned long max_age_allowed = 10 * 60 * 1000; // 10 minutes
 
-  for (NodesMap::iterator it = Nodes.begin(); it != Nodes.end();) {
-    bool mustRemove = true;
+  Nodes.refreshNodeList(max_age_allowed, max_age);
 
-    if (it->second.ip[0] != 0) {
-      if (it->second.age > 8) {
-        // Increase frequency sending ARP requests for 2 minutes
-        mustSendGratuitousARP = true;
-      }
-
-      if (it->second.age < 10) {
-        it->second.age++;
-        mustRemove = false;
-        ++it;
-      }
-    }
-
-    if (mustRemove) {
-      it = Nodes.erase(it);
-    }
+  #ifdef USES_ESPEASY_NOW
+  #ifdef ESP8266
+  // FIXME TD-er: Do not perform regular scans on ESP32 as long as we cannot scan per channel
+  if (!Nodes.isEndpoint()) {
+    WifiScan(true, Nodes.getESPEasyNOW_channel());
   }
+  #endif
+  #endif
 
-  if (mustSendGratuitousARP) {
+  if (max_age > (0.75 * max_age_allowed)) {
     Scheduler.sendGratuitousARP_now();
   }
+  sendSysInfoUDP(1);
+  #ifdef USES_ESPEASY_NOW
+  if (Nodes.recentlyBecameDistanceZero()) {
+    // Send to all channels
+    ESPEasy_now_handler.sendDiscoveryAnnounce(-1);
+  } else {
+    ESPEasy_now_handler.sendDiscoveryAnnounce();
+  }
+  ESPEasy_now_handler.sendNTPquery();
+  ESPEasy_now_handler.sendTraceRoute();
+  #endif // ifdef USES_ESPEASY_NOW
 }
 
 /*********************************************************************************************\
@@ -463,47 +441,30 @@ void sendSysInfoUDP(uint8_t repeats)
     return;
   }
 
-  // TODO: make a nice struct of it and clean up
-  // 1 uint8_t 'binary token 255'
-  // 1 uint8_t id '1'
-  // 6 uint8_t mac
-  // 4 uint8_t ip
-  // 1 uint8_t unit
-  // 2 uint8_t build
-  // 25 char name
-  // 1 uint8_t node type id
+  // 1 byte 'binary token 255'
+  // 1 byte id '1'
+  // NodeStruct object (packed data struct)
 
   // send my info to the world...
 #ifndef BUILD_NO_DEBUG
   addLog(LOG_LEVEL_DEBUG_MORE, F("UDP  : Send Sysinfo message"));
 #endif // ifndef BUILD_NO_DEBUG
 
+  const NodeStruct *thisNode = Nodes.getThisNode();
+
+  if (thisNode == nullptr) {
+    // Should not happen
+    return;
+  }
+
+  // Prepare UDP packet to send
+  uint8_t data[80];
+  data[0] = 255;
+  data[1] = 1;
+  memcpy(&data[2], thisNode, sizeof(NodeStruct));
+
   for (uint8_t counter = 0; counter < repeats; counter++)
   {
-    uint8_t data[80] = { 0 };
-    data[0] = 255;
-    data[1] = 1;
-
-    {
-      const MAC_address macread = NetworkMacAddress();
-      for (uint8_t x = 0; x < 6; x++) {
-        data[x + 2] = macread.mac[x];
-      }
-    }
-
-    {
-      const IPAddress ip = NetworkLocalIP();
-      for (uint8_t x = 0; x < 4; x++) {
-        data[x + 8] = ip[x];
-      }
-    }
-    data[12] = Settings.Unit;
-    data[13] =  lowByte(Settings.Build);
-    data[14] = highByte(Settings.Build);
-    memcpy((uint8_t *)data + 15, Settings.Name, 25);
-    data[40] = NODE_TYPE_ID;
-    data[41] =  lowByte(Settings.WebserverPort);
-    data[42] = highByte(Settings.WebserverPort);
     statusLED(true);
 
     IPAddress broadcastIP(255, 255, 255, 255);
@@ -516,22 +477,6 @@ void sendSysInfoUDP(uint8_t repeats)
       // FIXME TD-er: Must use scheduler to send out messages, not using delay
       delay(100);
     }
-  }
-
-  Nodes[Settings.Unit].age = 0; // Create new node when not already present.
-  // store my own info also in the list
-  NodesMap::iterator it = Nodes.find(Settings.Unit);
-
-  if (it != Nodes.end())
-  {
-    IPAddress ip = NetworkLocalIP();
-
-    for (uint8_t x = 0; x < 4; x++) {
-      it->second.ip[x] = ip[x];
-    }
-    it->second.age      = 0;
-    it->second.build    = Settings.Build;
-    it->second.nodeType = NODE_TYPE_ID;
   }
 }
 
@@ -947,7 +892,18 @@ bool hasIPaddr() {
 
 // Check connection. Maximum timeout 500 msec.
 bool NetworkConnected(uint32_t timeout_ms) {
-  uint32_t timer     = millis() + (timeout_ms > 500 ? 500 : timeout_ms);
+
+#ifdef USES_ESPEASY_NOW
+  if (isESPEasy_now_only()) {
+    return false;
+  }
+#endif
+
+  if (timeout_ms > 500) {
+    timeout_ms = 500;
+  }
+
+  uint32_t timer     = millis() + timeout_ms;
   uint32_t min_delay = timeout_ms / 20;
 
   if (min_delay < 10) {
@@ -1161,7 +1117,7 @@ String splitURL(const String& fullURL, String& host, uint16_t& port, String& fil
   return fullURL.substring(endhost);
 }
 
-#ifdef USE_SETTINGS_ARCHIVE
+#ifdef USE_DOWNLOAD
 
 // Download a file from a given URL and save to a local file named "file_save"
 // If the URL ends with a /, the file part will be assumed the same as file_save.
@@ -1203,7 +1159,8 @@ bool downloadFile(const String& url, String file_save, const String& user, const
   }
 
   if (fileExists(file_save)) {
-    error = F("File exists");
+    error = F("File exists: ");
+    error += file_save;
     addLog(LOG_LEVEL_ERROR, error);
     return false;
   }
@@ -1230,7 +1187,11 @@ bool downloadFile(const String& url, String file_save, const String& user, const
   if (httpCode != HTTP_CODE_OK) {
     error  = F("HTTP code: ");
     error += httpCode;
+    error += ' ';
+    error += url;
+
     addLog(LOG_LEVEL_ERROR, error);
+    http.end();
     return false;
   }
 
@@ -1238,7 +1199,8 @@ bool downloadFile(const String& url, String file_save, const String& user, const
   File f   = tryOpenFile(file_save, "w");
 
   if (f) {
-    uint8_t buff[128];
+    const size_t downloadBuffSize = 256;
+    uint8_t buff[downloadBuffSize];
     size_t  bytesWritten = 0;
 
     // get tcp stream
@@ -1246,14 +1208,16 @@ bool downloadFile(const String& url, String file_save, const String& user, const
 
     // read all data from server
     while (http.connected() && (len > 0 || len == -1)) {
-      // read up to 128 uint8_t
-      size_t c = stream->readBytes(buff, std::min((size_t)len, sizeof(buff)));
+      // read up to downloadBuffSize at a time.
+      const size_t c = stream->readBytes(buff, std::min((size_t)len, downloadBuffSize));
 
       if (c > 0) {
         timeout = millis() + 2000;
 
         if (f.write(buff, c) != c) {
-          error  = F("Error saving file, ");
+          error  = F("Error saving file: ");
+          error += file_save;
+          error += ' ';
           error += bytesWritten;
           error += F(" Bytes written");
           addLog(LOG_LEVEL_ERROR, error);
@@ -1266,7 +1230,8 @@ bool downloadFile(const String& url, String file_save, const String& user, const
       }
 
       if (timeOutReached(timeout)) {
-        error = F("Timeout");
+        error = F("Timeout: ");
+        error += file_save;
         addLog(LOG_LEVEL_ERROR, error);
         delay(0);
         http.end();
@@ -1276,12 +1241,18 @@ bool downloadFile(const String& url, String file_save, const String& user, const
     }
     f.close();
     http.end();
-    addLog(LOG_LEVEL_INFO, F("downloadFile: Success"));
+    if (loglevelActiveFor(LOG_LEVEL_INFO)) {
+      String log = F("downloadFile: ");
+      log += file_save;
+      log += F(" Success");
+      addLog(LOG_LEVEL_INFO, log);
+    }
     return true;
   }
-  error = F("Failed to open file for writing");
+  error = F("Failed to open file for writing: ");
+  error += file_save;
   addLog(LOG_LEVEL_ERROR, error);
   return false;
 }
 
-#endif // USE_SETTINGS_ARCHIVE
+#endif

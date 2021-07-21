@@ -61,7 +61,7 @@ enum class Output_Data_type_t : uint8_t {
 * DeviceStruct
 * Description of a plugin
 \*********************************************************************************************/
-struct DeviceStruct
+struct __attribute__((__packed__)) DeviceStruct
 {
   DeviceStruct();
 
@@ -87,6 +87,7 @@ struct DeviceStruct
   bool TimerOption        : 1;       // Allow to set the "Interval" timer for the plugin.
   bool TimerOptional      : 1;       // When taskdevice timer is not set and not optional, use default "Interval" delay (Settings.Delay)
   bool DecimalsOnly       : 1;       // Allow to set the number of decimals (otherwise treated a 0 decimals)
+  bool DuplicateDetection : 1;       // Some (typically receiving) plugins may receive the same data on multiple nodes. Such a plugin must help detect message duplicates.
 };
 typedef std::vector<DeviceStruct> DeviceVector;
 

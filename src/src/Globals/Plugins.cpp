@@ -84,6 +84,15 @@ deviceIndex_t getDeviceIndex_from_TaskIndex(taskIndex_t taskIndex) {
   return INVALID_DEVICE_INDEX;
 }
 
+pluginID_t getPluginID_from_TaskIndex(taskIndex_t taskIndex) {
+  deviceIndex_t deviceIndex = getDeviceIndex_from_TaskIndex(taskIndex);
+
+  if (deviceIndex == INVALID_DEVICE_INDEX) {
+    return INVALID_PLUGIN_ID;
+  }
+  return DeviceIndex_to_Plugin_id[deviceIndex];
+}
+
 deviceIndex_t getDeviceIndex(pluginID_t pluginID)
 {
   if (pluginID != INVALID_PLUGIN_ID) {

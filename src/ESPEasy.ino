@@ -108,7 +108,6 @@
 #include "src/ESPEasyCore/ESPEasy_setup.h"
 #include "src/ESPEasyCore/ESPEasy_loop.h"
 
-
 #ifdef PHASE_LOCKED_WAVEFORM
 # include <core_esp8266_waveform.h>
 #endif // ifdef PHASE_LOCKED_WAVEFORM

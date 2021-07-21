@@ -3,7 +3,7 @@
 
 #include "../../ESPEasy_common.h"
 #include "../DataStructs/DeviceStruct.h"
-#include "../DataStructs/UnitMessageCount.h"
+#include "../DataStructs/MessageRouteInfo.h"
 #include "../Globals/CPlugins.h"
 #include "../Globals/Plugins.h"
 
@@ -28,7 +28,7 @@ public:
 
   bool                             isDuplicate(const queue_element_formatted_uservar& other) const;
 
-  const UnitMessageCount_t       * getUnitMessageCount() const {
+  const MessageRouteInfo_t       * getMessageRouteInfo() const {
     return nullptr;
   }
 

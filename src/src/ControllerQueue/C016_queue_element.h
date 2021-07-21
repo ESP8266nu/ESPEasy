@@ -4,7 +4,7 @@
 #include "../../ESPEasy_common.h"
 #include "../CustomBuild/ESPEasyLimits.h"
 #include "../DataStructs/DeviceStruct.h"
-#include "../DataStructs/UnitMessageCount.h"
+#include "../DataStructs/MessageRouteInfo.h"
 #include "../Globals/Plugins.h"
 
 struct EventStruct;
@@ -36,7 +36,7 @@ public:
 
   bool isDuplicate(const C016_queue_element& other) const;
 
-  const UnitMessageCount_t* getUnitMessageCount() const { return nullptr; }
+  const MessageRouteInfo_t* getMessageRouteInfo() const { return nullptr; }
 
   float values[VARS_PER_TASK] = { 0 };
   unsigned long _timestamp    = 0; // Unix timestamp

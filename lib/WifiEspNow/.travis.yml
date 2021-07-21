@@ -1,0 +1,57 @@
+language: bash
+os:
+  - linux
+env:
+  matrix:
+    - PLATFORM=esp8266 \
+      HARDWARE=esp8266com/esp8266 \
+      COREGIT=https://github.com/esp8266/Arduino.git \
+      CORECOMMIT=192aaa42919dc65e5532ea4b60b002c4e19ce0ec \
+      BOARD='--board esp8266com:esp8266:nodemcuv2  --pref custom_xtal=nodemcuv2_80 --pref custom_eesz=nodemcuv2_4M1M'
+    - PLATFORM=esp32 \
+      HARDWARE=espressif/esp32 \
+      COREGIT=https://github.com/espressif/arduino-esp32.git \
+      CORECOMMIT=7df50a97d17b0953ea01cad0355410a66bd8b8b4 \
+      BOARD='--board espressif:esp32:heltec_wifi_kit_32 --pref custom_FlashFreq=heltec_wifi_kit_32_80'
+
+before_install:
+  - sudo iptables -A INPUT -p udp -m udp --dport 5353 -j DROP # https://github.com/per1234/arduino-ci-script/issues/1
+  - sudo apt-get update; sudo apt-get install xvfb
+  - /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_1.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :1 -ac -screen 0 1280x1024x16
+  - export DISPLAY=:1.0
+
+install:
+  - mkdir -p $HOME/arduino_ide; cd $HOME/arduino_ide
+  - curl -L http://downloads.arduino.cc/arduino-1.8.9-linux64.tar.xz | tar xJ --strip 1
+  - export PATH="$HOME/arduino_ide:$PATH"
+  - |
+    mkdir -p $HOME/Arduino/hardware/$HARDWARE
+    cd $HOME/Arduino/hardware/$HARDWARE
+    git init
+    git fetch $COREGIT
+    git -c advice.detachedHead=false checkout $CORECOMMIT
+    git submodule update --init
+    cd tools
+    python get.py
+  - mkdir -p $HOME/Arduino/libraries; cd $HOME/Arduino/libraries
+
+before_script:
+  - cp -r $TRAVIS_BUILD_DIR $HOME/Arduino/libraries/WifiEspNow
+  - arduino $BOARD --save-prefs
+  - arduino --get-pref
+
+script:
+  - |
+    NFAIL=0
+    for SKETCH in $(find $TRAVIS_BUILD_DIR -name '*.ino'); do
+      echo
+      echo
+      if [[ -f $(dirname $SKETCH)/skip-$PLATFORM.txt ]]; then
+        echo -e '\033[0;34m'Skipping $SKETCH '\033[0m'
+        continue
+      fi
+      echo -e '\033[0;36m'Building $SKETCH '\033[0m'
+      echo
+      arduino --verify $SKETCH || NFAIL=$((NFAIL+1))
+    done
+    [[ $NFAIL -eq 0 ]]

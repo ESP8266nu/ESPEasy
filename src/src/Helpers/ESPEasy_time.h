@@ -7,45 +7,49 @@
 
 
 
+
 class ESPEasy_time {
 public:
 
-ESPEasy_time();
+  ESPEasy_time();
 
-struct tm addSeconds(const struct tm& ts, int seconds, bool toLocalTime) const;
-static void breakTime(unsigned long timeInput, struct tm& tm);
+  struct tm   addSeconds(const struct tm& ts,
+                         int              seconds,
+                         bool             toLocalTime) const;
+  static void breakTime(unsigned long timeInput,
+                        struct tm   & tm);
+
+  // Restore the last known system time
+  // This may be useful to get some idea of what time it is.
+  // This way the unit can do things based on local time even when NTP servers may not respond.
+  // Do not use this when booting from deep sleep.
+  // Only call this once during boot.
+  void restoreLastKnownUnixTime(unsigned long lastSysTime, uint8_t deepSleepState);
+
+  void          setExternalTimeSource(double       time,
+                                      timeSource_t source);
+
+  uint32_t      getUnixTime() const;
+
+  void          initTime();
+
+  // Update and get the current systime
+  unsigned long now();
+
+  // Update time and return whether the minute has changed since last check.
+  bool          reportNewMinute();
+
+  bool          systemTimePresent() const;
+
+  bool          getNtpTime(double& unixTime_d);
 
 
-// Restore the last known system time
-// This may be useful to get some idea of what time it is.
-// This way the unit can do things based on local time even when NTP servers may not respond.
-// Do not use this when booting from deep sleep.
-// Only call this once during boot.
-void restoreLastKnownUnixTime(unsigned long lastSysTime, uint8_t deepSleepState);
-
-void setExternalTimeSource(double time, timeSource_t source);
-
-uint32_t getUnixTime() const;
-
-void initTime();
-
-// Update and get the current systime
-unsigned long now();
-
-// Update time and return whether the minute has changed since last check.
-bool reportNewMinute();
-
-bool systemTimePresent() const;
-
-bool getNtpTime(double& unixTime_d);
-
-
-
-/********************************************************************************************\
-   Date/Time string formatters
- \*********************************************************************************************/
+  /********************************************************************************************\
+     Date/Time string formatters
+   \*********************************************************************************************/
 
 public:
+
 
 // Format the current Date separated by the given delimiter
 // Default date format example: 20161231 (YYYYMMDD)
@@ -146,48 +150,45 @@ String weekday_str() const;
 
 public:
 
-// Compute the offset in seconds of the substring +/-<nn>[smh]
-static int getSecOffset(const String& format) ;
-String getSunriseTimeString(char delimiter) const;
-String getSunsetTimeString(char delimiter) const;
-String getSunriseTimeString(char delimiter, int secOffset) const;
-String getSunsetTimeString(char delimiter, int secOffset) const;
-
+  // Compute the offset in seconds of the substring +/-<nn>[smh]
+  static int getSecOffset(const String& format);
+  String     getSunriseTimeString(char delimiter) const;
+  String     getSunsetTimeString(char delimiter) const;
+  String     getSunriseTimeString(char delimiter,
+                                  int  secOffset) const;
+  String     getSunsetTimeString(char delimiter,
+                                 int  secOffset) const;
 
 private:
 
-static float sunDeclination(int doy);
-static float diurnalArc(float dec, float lat);
-static float equationOfTime(int doy);
-static int dayOfYear(int year, int month, int day);
+  static float sunDeclination(int doy);
+  static float diurnalArc(float dec,
+                          float lat);
+  static float equationOfTime(int doy);
+  static int   dayOfYear(int year,
+                         int month,
+                         int day);
 
-void calcSunRiseAndSet();
-struct tm getSunRise(int secOffset) const;
-struct tm getSunSet(int secOffset) const;
-
-
-
-
-
-
+  void      calcSunRiseAndSet();
+  struct tm getSunRise(int secOffset) const;
+  struct tm getSunSet(int secOffset) const;
 
 public:
 
-struct tm tm;
-uint32_t  syncInterval = 3600;       // time sync will be attempted after this many seconds
-double    sysTime = 0.0;             // Use high resolution double to get better sync between nodes when using NTP
-uint32_t  prevMillis = 0;
-uint32_t  nextSyncTime = 0;
-double    externalTimeSource = -1.0; // Used to set time from a source other than NTP.
-struct tm tsRise, tsSet;
-struct tm sunRise;
-struct tm sunSet;
-timeSource_t timeSource = No_time_source;
+  struct tm tm;
+  uint32_t syncInterval = 3600; // time sync will be attempted after this many seconds
+  double sysTime = 0.0;         // Use high resolution double to get better sync between nodes when using NTP
+  uint32_t prevMillis = 0;
+  uint32_t nextSyncTime = 0;
+  uint32_t lastSyncTime = 0;
+  uint32_t lastNTPSyncTime = 0;
+  double externalUnixTime_d = -1.0; // Used to set time from a source other than NTP.
+  struct tm tsRise, tsSet;
+  struct tm sunRise;
+  struct tm sunSet;
+  timeSource_t timeSource = timeSource_t::No_time_source;
 
-uint8_t PrevMinutes = 0;
-
-
-
+  uint8_t PrevMinutes = 0;
 };
 
 

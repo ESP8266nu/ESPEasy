@@ -349,6 +349,19 @@ void ESPEasy_setup()
   logMemUsageAfter(F("clearAllCaches()"));
   #endif
 
+  #ifdef USES_ESPEASY_NOW
+  if (isESPEasy_now_only() || Settings.UseESPEasyNow()) {
+    RTC.lastWiFiSettingsIndex     = 0; // Force to load the first settings.
+    RTC.lastWiFiChannel = 0; // Force slow connect
+  }
+#endif
+
+  #ifdef USES_ESPEASY_NOW
+  // Disable ESPEasy_now for 10 seconds to give opportunity to connect to WiFi.
+  temp_disable_EspEasy_now_timer = millis() + 10000;
+  #endif
+  
+
   if (Settings.UseRules && isDeepSleepEnabled())
   {
     String event = F("System#NoSleep=");

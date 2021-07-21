@@ -1,7 +1,7 @@
 #include "WiFiEventData.h"
 
 #include "../ESPEasyCore/ESPEasy_Log.h"
-
+#include "../Globals/ESPEasy_now_state.h"
 #include "../Globals/RTC.h"
 #include "../Globals/SecuritySettings.h"
 #include "../Globals/WiFi_AP_Candidates.h"
@@ -81,6 +81,7 @@ void WiFiEventData_t::markWiFiTurnOn() {
   processedConnectAPmode    = true;
   processedDisconnectAPmode = true;
   processedScanDone         = true;
+  processedProbeRequestAPmode = true;
   wifiConnectAttemptNeeded  = true;
   wifiConnectInProgress     = false;
   processingDisconnect.clear();
@@ -131,6 +132,10 @@ void WiFiEventData_t::setWiFiServicesInitialized() {
     addLog(LOG_LEVEL_DEBUG, F("WiFi : WiFi services initialized"));
     bitSet(wifiStatus, ESPEASY_WIFI_SERVICES_INITIALIZED);
     wifiConnectInProgress = false;
+
+    #ifdef USES_ESPEASY_NOW
+    temp_disable_EspEasy_now_timer = 0;
+    #endif
   }
 }
 

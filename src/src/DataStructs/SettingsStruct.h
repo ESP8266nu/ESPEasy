@@ -304,6 +304,7 @@ class SettingsStruct_tmpl
   uint8_t       WiFi_TX_power = 70; // 70 = 17.5dBm. unit: 0.25 dBm
   int8_t        WiFi_sensitivity_margin = 3;  // Margin in dBm on top of sensitivity.
   uint8_t       NumberExtraWiFiScans = 0;
+  int8_t        ForceESPEasyNOWchannel = 0;
 };
 
 /*

@@ -219,6 +219,11 @@ void onDisconnectedAPmode(const WiFiEventSoftAPModeStationDisconnected& event) {
   WiFiEventData.markDisconnectedAPmode(event.mac);
 }
 
+void onProbeRequestAPmode(const WiFiEventSoftAPModeProbeRequestReceived& event) {
+  APModeProbeRequestReceived_list.push_back(event);
+  WiFiEventData.processedProbeRequestAPmode = false;
+}
+
 void onStationModeAuthModeChanged(const WiFiEventStationModeAuthModeChanged& event) {
   WiFiEventData.setAuthMode(event.newMode);
 }

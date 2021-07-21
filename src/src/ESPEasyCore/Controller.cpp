@@ -19,6 +19,8 @@
 #include "../Globals/Device.h"
 #include "../Globals/ESPEasyWiFiEvent.h"
 #include "../Globals/ESPEasy_Scheduler.h"
+#include "../Globals/ESPEasy_now_handler.h"
+#include "../Globals/SendData_DuplicateChecker.h"
 #include "../Globals/MQTT.h"
 #include "../Globals/Plugins.h"
 #include "../Globals/Protocol.h"
@@ -88,6 +90,31 @@ void sendData(struct EventStruct *event)
   }
   lastSend = millis();
   STOP_TIMER(SEND_DATA_STATS);
+}
+
+
+// ********************************************************************************
+// Send to controllers, via a duplicate check
+// Some plugins may receive the same data among nodes, so check first if
+// another node may already have sent it.
+// The compare_key is computed by the sender plugin, with plugin specific knowledge
+// to make sure the key describes enough to detect duplicates.
+// ********************************************************************************
+void sendData_checkDuplicates(struct EventStruct *event, const String& compare_key)
+{
+#ifdef USES_ESPEASY_NOW
+  uint32_t key = SendData_DuplicateChecker.add(event, compare_key);
+  if (key != SendData_DuplicateChecker_struct::DUPLICATE_CHECKER_INVALID_KEY) {
+    // Must send out request to other nodes to see if any other has already processed it.
+    uint8_t broadcastMac[6];
+    ESPEasy_now_handler.sendSendData_DuplicateCheck(
+      key, 
+      ESPEasy_Now_DuplicateCheck::message_t::KeyToCheck, 
+      broadcastMac);
+  }
+#else
+  sendData(event);
+#endif
 }
 
 bool validUserVar(struct EventStruct *event) {
@@ -489,6 +516,63 @@ bool MQTT_queueFull(controllerIndex_t controller_idx) {
   }
   return false;
 }
+
+#ifdef USES_ESPEASY_NOW
+
+bool MQTTpublish(controllerIndex_t controller_idx, const ESPEasy_now_merger& message, const MessageRouteInfo_t& messageRouteInfo, bool retained)
+{
+  bool success = false;
+  if (!MQTT_queueFull(controller_idx))
+  {
+    {
+      MQTT_queue_element element;
+      size_t pos = 0;
+      element.controller_idx = controller_idx;
+      element._retained = retained;
+      element.MessageRouteInfo = messageRouteInfo;
+      const size_t payloadSize = message.getPayloadSize();
+      if (message.getString(element._topic,   pos) && message.getString(element._payload, pos)) {
+        success = true;
+        const size_t bytesLeft = payloadSize - pos;
+        if (bytesLeft >= 4) {
+          bool validMessageRouteInfo = false;
+          // There is some MessageRouteInfo left
+          MessageRouteInfo_t::uint8_t_vector routeInfoData;
+          routeInfoData.resize(bytesLeft);
+          // Use temp position as we don't yet know the true size of the message route info
+          size_t tmp_pos = pos;
+          if (message.getBinaryData(&routeInfoData[0], bytesLeft, tmp_pos) == bytesLeft) {
+            validMessageRouteInfo = element.MessageRouteInfo.deserialize(routeInfoData);
+            if (validMessageRouteInfo) {
+              // Move pos for the actual number of bytes we read.
+              pos += element.MessageRouteInfo.getSerializedSize();
+            }
+            {
+              String log = F("MQTT  : MQTTpublish MessageRouteInfo: ");
+              log += element.MessageRouteInfo.toString();
+              log += F(" bytesLeft: ");
+              log += bytesLeft;
+              addLog(LOG_LEVEL_INFO, log);
+            }
+          }
+          if (!validMessageRouteInfo) {
+            // Whatever may have been present, it could not be loaded, so clear just to be sure.
+            element.MessageRouteInfo = messageRouteInfo;
+          }
+          // Append our own unit number
+          element.MessageRouteInfo.appendUnit(Settings.Unit);
+        }
+      }
+      if (success) {
+        success = MQTTDelayHandler->addToQueue(std::move(element));
+      }
+    }
+  }
+  scheduleNextMQTTdelayQueue();
+  return success;
+}
+
+#endif
 
 bool MQTTpublish(controllerIndex_t controller_idx, taskIndex_t taskIndex, const char *topic, const char *payload, bool retained)
 {

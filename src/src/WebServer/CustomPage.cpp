@@ -62,13 +62,13 @@ boolean handle_custom(String path) {
 
     if (unit && (unit != Settings.Unit))
     {
-      NodesMap::iterator it = Nodes.find(unit);
+      auto it = Nodes.find(unit);
 
       if (it != Nodes.end()) {
         TXBuffer.startStream();
         sendHeadandTail(F("TmplDsh"), _HEAD);
         addHtml(F("<meta http-equiv=\"refresh\" content=\"0; URL=http://"));
-        addHtml(it->second.ip.toString());
+        addHtml(it->second.IP().toString());
         addHtml(F("/dashboard.esp\">"));
         sendHeadandTail(F("TmplDsh"), _TAIL);
         TXBuffer.endStream();
@@ -85,14 +85,14 @@ boolean handle_custom(String path) {
     addSelector_Head_reloadOnChange(F("unit"));
     uint8_t choice = Settings.Unit;
 
-    for (NodesMap::iterator it = Nodes.begin(); it != Nodes.end(); ++it)
+    for (auto it = Nodes.begin(); it != Nodes.end(); ++it)
     {
       if ((it->second.ip[0] != 0) || (it->first == Settings.Unit))
       {
         String name = String(it->first) + F(" - ");
 
         if (it->first != Settings.Unit) {
-          name += it->second.nodeName;
+          name += it->second.getNodeName();
         }
         else {
           name += Settings.Name;
@@ -105,10 +105,9 @@ boolean handle_custom(String path) {
     // create <> navigation buttons
     uint8_t prev = Settings.Unit;
     uint8_t next = Settings.Unit;
-    NodesMap::iterator it;
 
     for (uint8_t x = Settings.Unit - 1; x > 0; x--) {
-      it = Nodes.find(x);
+      auto it = Nodes.find(x);
 
       if (it != Nodes.end()) {
         if (it->second.ip[0] != 0) { prev = x; break; }
@@ -116,7 +115,7 @@ boolean handle_custom(String path) {
     }
 
     for (uint8_t x = Settings.Unit + 1; x < UNIT_NUMBER_MAX; x++) {
-      it = Nodes.find(x);
+      auto it = Nodes.find(x);
 
       if (it != Nodes.end()) {
         if (it->second.ip[0] != 0) { next = x; break; }

@@ -102,6 +102,9 @@ To create/register a plugin, you have to :
     #ifndef WEBSERVER_SYSINFO
         #define WEBSERVER_SYSINFO
     #endif
+    #ifndef WEBSERVER_METRICS
+        #define WEBSERVER_METRICS
+    #endif
     #ifndef WEBSERVER_TOOLS
         #define WEBSERVER_TOOLS
     #endif

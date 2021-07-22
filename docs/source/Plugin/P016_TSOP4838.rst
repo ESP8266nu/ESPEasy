@@ -31,7 +31,7 @@ Task settings
 Sensor
 ^^^^^^
 
-* **Sensor**: standard definition for an GPIO pin setting
+* **Sensor**: standard definition for a GPIO pin setting
 
 Content
 ^^^^^^^
@@ -39,29 +39,57 @@ Content
 Add new received code to command lines
 """"""""""""""""""""""""""""""""""""""
 
-After receiving an valid IR code the code is automatically added to the following table if it not already exists.
-
-.. note:: The code is only added automatically to line **Code nn [Hex]:**!
+After receiving a valid IR code the code is automatically added to the following table if it not already exists.
 
 Execute commands
 """"""""""""""""
 
-After receiving an valid IR the command that is assigned to this code (**Code nn [Hex]:** or **Alternative code nn [Hex]:**) is executed.
+After receiving a valid IR the command that is assigned to this code (**Code [Hex]** or **Alt. Code [Hex]**) is executed.
 
-Code nn [Hex]
+Inhibit time for the same command [ms]
+""""""""""""""""""""""""""""""""""""""
+
+The time that a same command will be ignored if receiving it multiple times. When set too high, often repeated commands like volume-up or volume-down will respond slower than expected.
+
+.. note:: The code is only added automatically to field **Code [Hex]**!
+
+Code - command map
+^^^^^^^^^^^^^^^^^^
+
+Decode type
+""""""""""""
+
+The type as detected by the receiver, the list contains all supported types.
+
+Repeat
+""""""
+
+If a repeat code is detected, this is checked.
+
+Code [Hex]
 """""""""""""
 
 If the received valid IR code matches this setting the **Command nn** is executed.
 
-Alternative code nn [Hex]
-"""""""""""""""""""""""""
+Alt. Decode type
+""""""""""""""""
+
+The type as detected by the receiver, the list contains all supported types.
+
+Repeat
+""""""
+
+If a repeat code is detected, this is checked.
+
+Alt. Code [Hex]
+"""""""""""""""
 
 If the received valid IR code matches this setting the **Command nn** is executed.
 
 Command nn
 """"""""""
 
-If the received valid IR code matches the code in **Code nn [Hex]:** or **Alternative code nn [Hex]:** this command is executed.
+If the received valid IR code matches the code in **Code [Hex]** or **Alt. Code [Hex]** this command is executed.
 
 .. note:: Up to 10 commands can be set !
 

@@ -57,6 +57,16 @@ unsigned long hexToUL(const String& input_c,
                       size_t        startpos,
                       size_t        nrHexDecimals);
 
+// Convert max. 16 hex decimals to unsigned long long
+unsigned long long hexToULL(const String& input_c,
+                            size_t        nrHexDecimals); 
+
+unsigned long long hexToULL(const String& input_c);
+
+unsigned long long hexToULL(const String& input_c,
+                            size_t        startpos,
+                            size_t        nrHexDecimals);
+
 String formatToHex(unsigned long value,
                    const __FlashStringHelper * prefix);
 

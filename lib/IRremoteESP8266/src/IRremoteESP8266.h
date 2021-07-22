@@ -768,7 +768,7 @@
 /// @note Always add to the end of the list and should never remove entries
 ///  or change order. Projects may save the type number for later usage
 ///  so numbering should always stay the same.
-enum decode_type_t {
+enum decode_type_t : short {
   UNKNOWN = -1,
   UNUSED = 0,
   RC5,

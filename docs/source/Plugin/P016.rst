@@ -47,6 +47,11 @@ Change log
   |added|
   Major overhaul for 2.0 release.
 
+  2021-05-24:
+
+  |added|
+  Support for IR codes up to 64 bit with separated Decode type and Repeat option, existing settings are converted, reworked the settings UI to reflect those changes.
+
 .. versionadded:: 1.0
   ...
 

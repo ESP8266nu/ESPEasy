@@ -103,7 +103,7 @@ decode_type_t strToDecodeType(const char * const str) {
 /// @param[in] isRepeat A flag indicating if it is a repeat message.
 /// @return A String containing the protocol name. kUnknownStr if no match.
 String typeToString(const decode_type_t protocol, const bool isRepeat) {
-  String result = "";
+  String result = F("");
   const char *ptr = kAllProtocolNamesStr;
   if (protocol > kLastDecodeType || protocol == decode_type_t::UNKNOWN) {
     result = kUnknownStr;
@@ -307,7 +307,9 @@ String resultToTimingInfo(const decode_results * const results) {
 String resultToHexidecimal(const decode_results * const result) {
   String output = F("0x");
   // Reserve some space for the string to reduce heap fragmentation.
+#if DECODE_AC // Only need reserve if > 11 characters
   output.reserve(2 * kStateSizeMax + 2);  // Should cover worst cases.
+#endif
   if (hasACState(result->decode_type)) {
 #if DECODE_AC
     for (uint16_t i = 0; result->bits > i * 8; i++) {

@@ -126,6 +126,8 @@ unsigned long hexToUL(const String& input_c, size_t nrHexDecimals) {
 
   if (nr_decimals > inputLength) {
     nr_decimals = inputLength;
+  } else if (input_c.startsWith(F("0x"))) { // strtoul handles that prefix nicely
+    nr_decimals += 2;
   }
   String tmp = input_c.substring(0, nr_decimals);
 
@@ -138,6 +140,33 @@ unsigned long hexToUL(const String& input_c) {
 
 unsigned long hexToUL(const String& input_c, size_t startpos, size_t nrHexDecimals) {
   return hexToUL(input_c.substring(startpos, startpos + nrHexDecimals), nrHexDecimals);
+}
+
+// Convert max. 16 hex decimals to unsigned long long (aka uint64_t)
+unsigned long long hexToULL(const String& input_c, size_t nrHexDecimals) {
+  size_t nr_decimals = nrHexDecimals;
+
+  if (nr_decimals > 16) {
+    nr_decimals = 16;
+  }
+  size_t inputLength = input_c.length();
+
+  if (nr_decimals > inputLength) {
+    nr_decimals = inputLength;
+  } else if (input_c.startsWith(F("0x"))) { // strtoull handles that prefix nicely
+    nr_decimals += 2;
+  }
+  String tmp = input_c.substring(0, nr_decimals);
+
+  return strtoull(tmp.c_str(), 0, 16);
+}
+
+unsigned long long hexToULL(const String& input_c) {
+  return hexToULL(input_c, input_c.length());
+}
+
+unsigned long long hexToULL(const String& input_c, size_t startpos, size_t nrHexDecimals) {
+  return hexToULL(input_c.substring(startpos, startpos + nrHexDecimals), nrHexDecimals);
 }
 
 String formatToHex(unsigned long value, const __FlashStringHelper * prefix) {

@@ -8,7 +8,7 @@ def esp32_create_factory_bin(source, target, env):
     sections = env.subst(env.get('FLASH_EXTRA_IMAGES'))
     new_file = open(new_file_name,"wb")
     for section in sections:
-      sect_adr,sect_file = section.split(" ")
+      sect_adr,sect_file = section.split(" ",1)
       source = open(sect_file,"rb")
       new_file.seek(int(sect_adr,0)-offset)
       new_file.write(source.read());
